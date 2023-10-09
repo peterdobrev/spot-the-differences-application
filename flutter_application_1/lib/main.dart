@@ -5,49 +5,56 @@ void main(List<String> args) {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key); // Changed super.key to this
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Spot the Differences",
       theme: ThemeData.dark(),
-      home: HomeScreen(),
+      home: const HomeScreen(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({Key? key}) : super(key: key);
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
-  // Define the area of difference (in relative coordinates between 0 and 1)
+  @override
+  // ignore: library_private_types_in_public_api
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Rect? highlightRect;
+
   final Rect differenceArea = Rect.fromPoints(
-    const Offset(0.2, 0.4), // top-left corner
-    const Offset(0.5, 0.9), // bottom-right corner
+    const Offset(0.1, 0.1),
+    const Offset(0.8, 0.9),
   );
 
-  void onTap(TapUpDetails details, BuildContext context, String imageName,
-      bool isRightImage) {
-    // Get the size of the image widget
+  void onTap(TapUpDetails details, BuildContext context, bool isRightImage) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
 
-    // Convert tap location to relative coordinates
     final localPosition = renderBox.globalToLocal(details.globalPosition);
     var dx = localPosition.dx / size.width;
     final dy = localPosition.dy / size.height;
 
-    // Adjust dx for the right image
     if (isRightImage) {
       dx -= 0.5;
     }
 
-    print('Tapped in $imageName!');
-    print('Tapped at: ${Offset(dx, dy)}');
+    print('Tapped at: (${localPosition.dx};${localPosition.dy})');
+    print('Tapped at: ($dx;$dy)');
 
-    // Check if the tap is within the area of difference
     if (differenceArea.contains(Offset(dx, dy))) {
-      print('Difference spotted in $imageName!');
+      setState(() {
+        highlightRect = Rect.fromPoints(
+          Offset(localPosition.dx - 20, localPosition.dy - 20),
+          Offset(localPosition.dx + 20, localPosition.dy + 20),
+        );
+      });
     }
   }
 
@@ -71,9 +78,27 @@ class HomeScreen extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: GestureDetector(
-          onTapUp: (details) =>
-              onTap(details, context, imageName, isRightImage),
-          child: Image.asset(imageName),
+          onTapUp: (details) => onTap(details, context, isRightImage),
+          child: Stack(
+            children: [
+              Image.asset(imageName),
+              if (highlightRect != null)
+                Positioned(
+                  left: highlightRect!.left,
+                  top: highlightRect!.top,
+                  child: Container(
+                    width: highlightRect!.width,
+                    height: highlightRect!.height,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.red,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
