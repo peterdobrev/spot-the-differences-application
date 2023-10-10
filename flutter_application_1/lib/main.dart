@@ -41,32 +41,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final localPosition = renderBox.globalToLocal(details.globalPosition);
 
     // Adjust the local position based on the widget's global position
-    final adjustedLocalPosition = localPosition - offset;
+    var adjustedLocalPosition = localPosition - offset;
 
-    print('Global Offset: $offset');
-    print('Original Local Position: $localPosition');
-    print('Adjusted Local Position: $adjustedLocalPosition');
-
-    // Continue your existing logic, e.g., calculating relative coordinates
     final size = renderBox.size;
     var dx = adjustedLocalPosition.dx / size.width;
     final dy = adjustedLocalPosition.dy / size.height;
 
+    var x = adjustedLocalPosition.dx;
+    final y = adjustedLocalPosition.dy;
+
     if (isRightImage) {
       dx -= 0.5;
+      x -= size.width / 2;
     }
 
-    print(
-        'Tapped at: (${adjustedLocalPosition.dx};${adjustedLocalPosition.dy})');
-    print('Tapped at: ($dx;$dy)');
-
-    // Check if the tap is within the area of difference
     if (differenceArea.contains(Offset(dx, dy))) {
-      // Assuming highlightRect is a state variable
       setState(() {
         highlightRect = Rect.fromPoints(
-          Offset(adjustedLocalPosition.dx - 20, adjustedLocalPosition.dy - 20),
-          Offset(adjustedLocalPosition.dx + 20, adjustedLocalPosition.dy + 20),
+          Offset(x - 20, y - 20),
+          Offset(x + 20, y + 20),
         );
       });
     }
@@ -85,30 +78,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildImage(BuildContext context, String imageName, bool isRightImage) {
-    return GestureDetector(
-      onTapUp: (details) => onTap(details, context, isRightImage),
-      child: Stack(
-        children: [
-          Image.asset(
-            imageName,
-            fit: BoxFit.cover, // This will cover the entire available space
-          ),
-          if (highlightRect != null)
-            Positioned(
-              left: highlightRect!.left,
-              top: highlightRect!.top,
-              child: Container(
-                width: highlightRect!.width,
-                height: highlightRect!.height,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.red,
-                    width: 2,
-                  ),
+    return Expanded(
+      child: GestureDetector(
+        onTapUp: (details) => onTap(details, context, isRightImage),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // Now you have the constraints
+            print(
+                'Max Width: ${constraints.maxWidth}, Max Height: ${constraints.maxHeight}');
+            return Stack(
+              children: [
+                Image.asset(
+                  imageName,
+                  fit: BoxFit
+                      .cover, // This will cover the entire available space
                 ),
-              ),
-            ),
-        ],
+                if (highlightRect != null)
+                  Positioned(
+                    left: highlightRect!.left,
+                    top: highlightRect!.top,
+                    child: Container(
+                      width: highlightRect!.width,
+                      height: highlightRect!.height,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
