@@ -21,6 +21,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _HomeScreenState createState() => _HomeScreenState();
 }
 
@@ -31,8 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey rightImageKey = GlobalKey();
 
   final Rect differenceArea = Rect.fromPoints(
-    const Offset(0.0, 0.0),
-    const Offset(1.0, 1.0),
+    const Offset(0.4, 0.4),
+    const Offset(0.5, 0.5),
   );
 
   void onTap(TapUpDetails details, BuildContext context, bool isBottomImage,
@@ -49,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final Offset localPosition =
         details.globalPosition - positionRelativeToScreen;
 
+    // ignore: avoid_print
     print(localPosition);
 
     // Now you have the local position of the tap within the widget itself.
@@ -60,37 +62,53 @@ class _HomeScreenState extends State<HomeScreen> {
     var x = localPosition.dx;
     var y = localPosition.dy;
 
-    if (isBottomImage) {
-      //dy -= 0.5; // Offset if it is the bottom image
-    }
-
     if (differenceArea.contains(Offset(dx, dy))) {
       setState(() {
+        print('${Offset(dx, dy)}');
         highlightRect = Rect.fromPoints(
           Offset(x - 50, y - 50),
           Offset(x + 50, y + 50),
         );
       });
     } else {
+      // ignore: avoid_print
       print('Not contained in $differenceArea ');
+      // ignore: avoid_print
       print('${Offset(dx, dy)}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    int remainingDifferences = 1;
+
     return Scaffold(
       appBar: AppBar(
-        // This is your AppBar
         title: const Text("Spot the Differences"),
       ),
       body: Column(
-        // Changed from Row to Column
+        //mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          buildImage(context, 'assets/vintage_car_in_woods_1.png', false,
-              leftImageKey),
-          buildImage(context, 'assets/vintage_car_in_woods_2.png', true,
-              rightImageKey),
+          Padding(
+            padding: const EdgeInsets.all(1.0),
+            child: buildImage(context, 'assets/vintage_car_in_woods_1.png',
+                false, leftImageKey),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
+              "Differences remaining - $remainingDifferences",
+              style: const TextStyle(
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(1.0),
+            child: buildImage(context, 'assets/vintage_car_in_woods_2.png',
+                false, rightImageKey),
+          ),
         ],
       ),
     );
@@ -98,10 +116,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget buildImage(BuildContext context, String imageName, bool isBottomImage,
       GlobalKey key) {
-    return Expanded(
-      child: GestureDetector(
+    return GestureDetector(
+      onTapUp: (details) => onTap(details, context, isBottomImage, key),
+      child: Container(
         key: key,
-        onTapUp: (details) => onTap(details, context, isBottomImage, key),
         child: Stack(
           children: [
             Image.asset(
