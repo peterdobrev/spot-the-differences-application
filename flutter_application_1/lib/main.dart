@@ -27,12 +27,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Rect? highlightRect;
 
+  final GlobalKey leftImageKey = GlobalKey();
+  final GlobalKey rightImageKey = GlobalKey();
+
   final Rect differenceArea = Rect.fromPoints(
     const Offset(0.0, 0.0),
     const Offset(1.0, 1.0),
   );
 
-  void onTap(TapUpDetails details, BuildContext context, bool isBottomImage) {
+  void onTap(TapUpDetails details, BuildContext context, bool isBottomImage,
+      GlobalKey key) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset localPosition =
         renderBox.globalToLocal(details.globalPosition);
@@ -62,21 +66,28 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      /*appBar: AppBar(
+        // This is your AppBar
+        title: const Text("Spot the Differences"),
+      ),*/
       body: Column(
         // Changed from Row to Column
         children: [
-          buildImage(context, 'assets/vintage_car_in_woods_1.png', false),
-          buildImage(context, 'assets/vintage_car_in_woods_2.png', true),
+          buildImage(context, 'assets/vintage_car_in_woods_1.png', false,
+              leftImageKey),
+          buildImage(context, 'assets/vintage_car_in_woods_2.png', true,
+              rightImageKey),
         ],
       ),
     );
   }
 
-  Widget buildImage(
-      BuildContext context, String imageName, bool isBottomImage) {
+  Widget buildImage(BuildContext context, String imageName, bool isBottomImage,
+      GlobalKey key) {
     return Expanded(
       child: GestureDetector(
-        onTapUp: (details) => onTap(details, context, isBottomImage),
+        key: key,
+        onTapUp: (details) => onTap(details, context, isBottomImage, key),
         child: Stack(
           children: [
             Image.asset(
