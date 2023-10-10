@@ -37,9 +37,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void onTap(TapUpDetails details, BuildContext context, bool isBottomImage,
       GlobalKey key) {
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    // This RenderBox is for the widget to which the GlobalKey is attached.
+    final RenderBox renderBox =
+        key.currentContext!.findRenderObject() as RenderBox;
+
+    // Gets the position of the RenderBox within the coordinate system of the screen.
+    final Offset positionRelativeToScreen =
+        renderBox.localToGlobal(Offset.zero);
+
+    // Calculate the local position by subtracting the position relative to the screen.
     final Offset localPosition =
-        renderBox.globalToLocal(details.globalPosition);
+        details.globalPosition - positionRelativeToScreen;
+
+    print(localPosition);
+
+    // Now you have the local position of the tap within the widget itself.
     final size = renderBox.size;
 
     var dx = localPosition.dx / size.width;
@@ -49,8 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     var y = localPosition.dy;
 
     if (isBottomImage) {
-      dy -= 0.5; // Offset if it is the bottom image
-      y -= size.height / 2;
+      //dy -= 0.5; // Offset if it is the bottom image
     }
 
     if (differenceArea.contains(Offset(dx, dy))) {
@@ -60,16 +71,19 @@ class _HomeScreenState extends State<HomeScreen> {
           Offset(x + 50, y + 50),
         );
       });
+    } else {
+      print('Not contained in $differenceArea ');
+      print('${Offset(dx, dy)}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*appBar: AppBar(
+      appBar: AppBar(
         // This is your AppBar
         title: const Text("Spot the Differences"),
-      ),*/
+      ),
       body: Column(
         // Changed from Row to Column
         children: [
