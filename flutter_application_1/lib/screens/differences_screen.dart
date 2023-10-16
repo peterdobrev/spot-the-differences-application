@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/image_pair.dart';
 
 class DifferencesScreen extends StatefulWidget {
-  final String leftImage;
-  final String rightImage;
-  final List<Rect> differenceAreas;
+  final ImagePair imagePair;
 
   const DifferencesScreen({
     Key? key,
-    required this.leftImage,
-    required this.rightImage,
-    required this.differenceAreas,
+    required this.imagePair,
   }) : super(key: key);
   @override
   // ignore: library_private_types_in_public_api
@@ -33,7 +30,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
   @override
   void initState() {
     super.initState();
-    differenceAreas = widget.differenceAreas; // Initialize from widget
+    differenceAreas =
+        widget.imagePair.differenceAreas; // Initialize from widget
     remainingDifferences = differenceAreas.length;
   }
 
@@ -86,9 +84,9 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         );
 
         if (remainingDifferences == 0) {
-          if (remainingDifferences == 0) {
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: (context) => DifferencesScreen(
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => DifferencesScreen(
+              imagePair: ImagePair(
                 leftImage: 'assets/vintage_car_in_woods_2.png',
                 rightImage: 'assets/vintage_car_in_woods_1.png',
                 differenceAreas: [
@@ -98,8 +96,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
                       const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
                 ],
               ),
-            ));
-          }
+            ),
+          ));
         }
       });
     } else {
@@ -121,7 +119,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(1.0),
-            child: buildImage(context, widget.leftImage, leftImageKey),
+            child:
+                buildImage(context, widget.imagePair.leftImage, leftImageKey),
           ),
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -135,7 +134,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(1.0),
-            child: buildImage(context, widget.rightImage, rightImageKey),
+            child:
+                buildImage(context, widget.imagePair.rightImage, rightImageKey),
           ),
         ],
       ),
