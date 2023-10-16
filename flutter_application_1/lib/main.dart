@@ -31,13 +31,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey leftImageKey = GlobalKey();
   final GlobalKey rightImageKey = GlobalKey();
 
-  final Rect differenceArea = Rect.fromPoints(
-    const Offset(0.4, 0.4),
-    const Offset(0.5, 0.5),
-  );
+  List<Rect> differenceAreas = [
+    Rect.fromPoints(const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
+    Rect.fromPoints(const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
+    // Add more rects here
+  ];
 
-  void onTap(TapUpDetails details, BuildContext context, bool isBottomImage,
-      GlobalKey key) {
+  late int remainingDifferences;
+
+  @override
+  void initState() {
+    super.initState();
+    remainingDifferences = differenceAreas.length;
+  }
+
+  void onTap(TapUpDetails details, BuildContext context, GlobalKey key) {
     // This RenderBox is for the widget to which the GlobalKey is attached.
     final RenderBox renderBox =
         key.currentContext!.findRenderObject() as RenderBox;
@@ -62,8 +70,23 @@ class _HomeScreenState extends State<HomeScreen> {
     var x = localPosition.dx;
     var y = localPosition.dy;
 
-    if (differenceArea.contains(Offset(dx, dy))) {
+    var isDifferenceSpotted = false;
+    Rect? spottedArea;
+
+    for (Rect area in differenceAreas) {
+      if (area.contains(Offset(dx, dy))) {
+        isDifferenceSpotted = true;
+        spottedArea = area;
+        break;
+      }
+    }
+
+    if (isDifferenceSpotted) {
       setState(() {
+        differenceAreas
+            .remove(spottedArea); // Remove the spotted area from the list
+        remainingDifferences--; // Decrement the counter
+
         print('${Offset(dx, dy)}');
         highlightRect = Rect.fromPoints(
           Offset(x - 50, y - 50),
@@ -72,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } else {
       // ignore: avoid_print
-      print('Not contained in $differenceArea ');
+      print('Not contained in any difference areas');
       // ignore: avoid_print
       print('${Offset(dx, dy)}');
     }
@@ -80,8 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int remainingDifferences = 1;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Spot the Differences"),
@@ -91,8 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(1.0),
-            child: buildImage(context, 'assets/vintage_car_in_woods_1.png',
-                false, leftImageKey),
+            child: buildImage(
+                context, 'assets/vintage_car_in_woods_1.png', leftImageKey),
           ),
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -106,18 +127,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(1.0),
-            child: buildImage(context, 'assets/vintage_car_in_woods_2.png',
-                false, rightImageKey),
+            child: buildImage(
+                context, 'assets/vintage_car_in_woods_2.png', rightImageKey),
           ),
         ],
       ),
     );
   }
 
-  Widget buildImage(BuildContext context, String imageName, bool isBottomImage,
-      GlobalKey key) {
+  Widget buildImage(BuildContext context, String imageName, GlobalKey key) {
     return GestureDetector(
-      onTapUp: (details) => onTap(details, context, isBottomImage, key),
+      onTapUp: (details) => onTap(details, context, key),
       child: Container(
         key: key,
         child: Stack(
