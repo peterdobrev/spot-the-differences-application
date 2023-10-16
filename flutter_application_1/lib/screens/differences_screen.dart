@@ -19,11 +19,7 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
   final GlobalKey leftImageKey = GlobalKey();
   final GlobalKey rightImageKey = GlobalKey();
 
-  List<Rect> differenceAreas = [
-    Rect.fromPoints(const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
-    Rect.fromPoints(const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
-    // Add more rects here
-  ];
+  List<Rect> differenceAreas = [];
 
   late int remainingDifferences;
 
