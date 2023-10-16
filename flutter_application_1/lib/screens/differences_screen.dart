@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/highlighted_rect.dart';
 import 'package:flutter_application_1/models/image_pair.dart';
 
 class DifferencesScreen extends StatefulWidget {
@@ -80,20 +81,22 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         );
 
         if (remainingDifferences == 0) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => DifferencesScreen(
-              imagePair: ImagePair(
-                leftImage: 'assets/vintage_car_in_woods_2.png',
-                rightImage: 'assets/vintage_car_in_woods_1.png',
-                differenceAreas: [
-                  Rect.fromPoints(
-                      const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
-                  Rect.fromPoints(
-                      const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
-                ],
+          Future.delayed(Duration(seconds: 2), () {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (context) => DifferencesScreen(
+                imagePair: ImagePair(
+                  leftImage: 'assets/vintage_car_in_woods_2.png',
+                  rightImage: 'assets/vintage_car_in_woods_1.png',
+                  differenceAreas: [
+                    Rect.fromPoints(
+                        const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
+                    Rect.fromPoints(
+                        const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
+                  ],
+                ),
               ),
-            ),
-          ));
+            ));
+          });
         }
       });
     } else {
@@ -149,22 +152,9 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
               imageName,
               fit: BoxFit.cover,
             ),
-            ...highlightedRects
-                .map((rect) => Positioned(
-                      left: rect.left,
-                      top: rect.top,
-                      child: Container(
-                        width: rect.width,
-                        height: rect.height,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.red,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ))
-                .toList(),
+            ...highlightedRects.map((rect) {
+              return HighlightedRect(rect: rect);
+            }).toList(),
           ],
         ),
       ),
