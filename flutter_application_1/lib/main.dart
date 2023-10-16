@@ -26,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Rect? highlightRect;
+  List<Rect> highlightedRects = [];
 
   final GlobalKey leftImageKey = GlobalKey();
   final GlobalKey rightImageKey = GlobalKey();
@@ -83,14 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (isDifferenceSpotted) {
       setState(() {
-        differenceAreas
-            .remove(spottedArea); // Remove the spotted area from the list
-        remainingDifferences--; // Decrement the counter
+        differenceAreas.remove(spottedArea);
+        remainingDifferences--;
 
-        print('${Offset(dx, dy)}');
-        highlightRect = Rect.fromPoints(
-          Offset(x - 50, y - 50),
-          Offset(x + 50, y + 50),
+        highlightedRects.add(
+          Rect.fromPoints(
+            Offset(x - 50, y - 50),
+            Offset(x + 50, y + 50),
+          ),
         );
       });
     } else {
@@ -146,21 +146,22 @@ class _HomeScreenState extends State<HomeScreen> {
               imageName,
               fit: BoxFit.cover,
             ),
-            if (highlightRect != null)
-              Positioned(
-                left: highlightRect!.left,
-                top: highlightRect!.top,
-                child: Container(
-                  width: highlightRect!.width,
-                  height: highlightRect!.height,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.red,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
+            ...highlightedRects
+                .map((rect) => Positioned(
+                      left: rect.left,
+                      top: rect.top,
+                      child: Container(
+                        width: rect.width,
+                        height: rect.height,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
           ],
         ),
       ),
