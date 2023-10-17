@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class ImagePair {
-  final String leftImage;
-  final String rightImage;
+  final String topImage;
+  final String bottomImage;
   final List<Rect> differenceAreas;
 
   ImagePair({
-    required this.leftImage,
-    required this.rightImage,
+    required this.topImage,
+    required this.bottomImage,
     required this.differenceAreas,
   });
 }

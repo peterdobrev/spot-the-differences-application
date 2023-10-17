@@ -81,12 +81,12 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         );
 
         if (remainingDifferences == 0) {
-          Future.delayed(Duration(seconds: 2), () {
+          Future.delayed(const Duration(seconds: 2), () {
             Navigator.of(context).pushReplacement(MaterialPageRoute(
               builder: (context) => DifferencesScreen(
                 imagePair: ImagePair(
-                  leftImage: 'assets/vintage_car_in_woods_2.png',
-                  rightImage: 'assets/vintage_car_in_woods_1.png',
+                  topImage: 'assets/vintage_car_in_woods_2.png',
+                  bottomImage: 'assets/vintage_car_in_woods_1.png',
                   differenceAreas: [
                     Rect.fromPoints(
                         const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
@@ -110,32 +110,67 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Spot the Differences"),
-      ),
-      body: Column(
-        //mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(1.0),
-            child:
-                buildImage(context, widget.imagePair.leftImage, leftImageKey),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Top image
+              Padding(
+                  padding: const EdgeInsets.only(top: 30.0),
+                  child: buildQuestionMarks(differenceAreas.length)),
+              Padding(
+                padding: const EdgeInsets.all(1.0) +
+                    const EdgeInsets.only(top: 20.0),
+                child: buildImage(
+                    context, widget.imagePair.topImage, leftImageKey),
+              ),
+              // Spot the Differences text
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  "Differences remaining - $remainingDifferences",
+                  style: const TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              //Bottom image
+              Padding(
+                padding: const EdgeInsets.all(1.0),
+                child: buildImage(
+                    context, widget.imagePair.bottomImage, rightImageKey),
+              ),
+              // Lightbulb button
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: FloatingActionButton(
+                  onPressed: () {},
+                  backgroundColor: Colors.yellow,
+                  child: const Icon(Icons.lightbulb_outline),
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              "Differences remaining - $remainingDifferences",
-              style: const TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
+          Positioned(
+            top: 10,
+            left: 10,
+            child: buildHearts(3),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: SizedBox(
+              height: 30.0,
+              width: 30.0,
+              child: FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.settings),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(1.0),
-            child:
-                buildImage(context, widget.imagePair.rightImage, rightImageKey),
-          ),
+          )
         ],
       ),
     );
@@ -159,5 +194,35 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         ),
       ),
     );
+  }
+
+  Widget buildHearts(int count) {
+    return Row(
+        children: List.generate(
+      count,
+      (index) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4.0), // Space between hearts
+        child: Icon(
+          Icons.favorite,
+          color: Colors.red,
+          size: 30.0,
+        ),
+      ),
+    ));
+  }
+
+  Widget buildQuestionMarks(int count) {
+    return Row(
+        children: List.generate(
+      count,
+      (index) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4.0), // Space between hearts
+        child: Icon(
+          Icons.question_mark_outlined,
+          color: Colors.white,
+          size: 30.0,
+        ),
+      ),
+    ));
   }
 }
