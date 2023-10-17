@@ -19,8 +19,8 @@ class MyApp extends StatelessWidget {
             topImage: 'assets/vintage_car_in_woods_2.png',
             bottomImage: 'assets/vintage_car_in_woods_1.png',
             differenceAreas: [
-              Rect.fromPoints(const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
-              Rect.fromPoints(const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
+              Rect.fromPoints(const Offset(0.2, 0.2), const Offset(0.39, 0.39)),
+              Rect.fromPoints(const Offset(0.5, 0.5), const Offset(0.69, 0.69)),
             ],
           ),
         ));

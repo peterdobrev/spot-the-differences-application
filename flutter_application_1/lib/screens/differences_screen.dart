@@ -24,6 +24,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
 
   late int remainingDifferences;
 
+  int lives = 3;
+
   @override
   void initState() {
     super.initState();
@@ -89,9 +91,9 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
                   bottomImage: 'assets/vintage_car_in_woods_1.png',
                   differenceAreas: [
                     Rect.fromPoints(
-                        const Offset(0.2, 0.2), const Offset(0.3, 0.3)),
+                        const Offset(0.2, 0.2), const Offset(0.39, 0.39)),
                     Rect.fromPoints(
-                        const Offset(0.5, 0.5), const Offset(0.6, 0.6)),
+                        const Offset(0.5, 0.5), const Offset(0.69, 0.69)),
                   ],
                 ),
               ),
@@ -104,6 +106,30 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
       print('Not contained in any difference areas');
       // ignore: avoid_print
       print('${Offset(dx, dy)}');
+
+      setState(() {
+        if (lives > 0) {
+          lives--; // Decrease the number of lives by 1
+        }
+        if (lives <= 0) {
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (context) => DifferencesScreen(
+                imagePair: ImagePair(
+                  topImage: 'assets/vintage_car_in_woods_2.png',
+                  bottomImage: 'assets/vintage_car_in_woods_1.png',
+                  differenceAreas: [
+                    Rect.fromPoints(
+                        const Offset(0.2, 0.2), const Offset(0.39, 0.39)),
+                    Rect.fromPoints(
+                        const Offset(0.5, 0.5), const Offset(0.69, 0.69)),
+                  ],
+                ),
+              ),
+            ));
+          });
+        }
+      });
     }
   }
 
@@ -123,22 +149,32 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
                     context, widget.imagePair.topImage, leftImageKey),
               ),
               // Question mark differences counter
-              if (remainingDifferences != 0)
+              if (remainingDifferences != 0 && lives > 0)
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Padding(
                     padding: const EdgeInsets.all(15.0),
                     child: buildQuestionMarks(differenceAreas.length),
                   ),
                 ]),
-              if (remainingDifferences == 0)
+              if (remainingDifferences == 0 && lives > 0)
                 const Padding(
-                  padding: EdgeInsets.all(15.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text(
                     "You found all the differences",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 20),
                   ),
                 ),
+              if (lives <= 0)
+                const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    "You lost!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ),
+
               //Bottom image
               Padding(
                 padding: const EdgeInsets.all(1.0),
@@ -159,7 +195,7 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
           Positioned(
             top: 10,
             left: 10,
-            child: buildHearts(3),
+            child: buildHearts(),
           ),
           Positioned(
             top: 10,
@@ -199,33 +235,48 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
     );
   }
 
-  Widget buildHearts(int count) {
+  Widget buildHearts() {
     return Row(
-        children: List.generate(
-      count,
-      (index) => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4.0), // Space between hearts
-        child: Icon(
-          Icons.favorite,
-          color: Colors.red,
-          size: 30.0,
+      children: List.generate(
+        3, // Assuming a total of 3 lives
+        (index) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Icon(
+            Icons.favorite,
+            color: index < lives ? Colors.red : Colors.grey,
+            size: 30.0,
+          ),
         ),
       ),
-    ));
+    );
   }
 
   Widget buildQuestionMarks(int count) {
     return Row(
-        children: List.generate(
-      count,
-      (index) => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4.0), // Space between hearts
-        child: Icon(
-          Icons.question_mark_outlined,
-          color: Colors.white,
-          size: 30.0,
+      children: List.generate(
+        count,
+        (index) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors
+                    .lightBlue, // Choose the color of your circle outline here
+                width: 2.0, // Choose the width of your circle outline here
+              ),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(6.0),
+              child: Icon(
+                Icons.question_mark_outlined,
+                color: Colors.white,
+                size: 30.0,
+              ),
+            ),
+          ),
         ),
       ),
-    ));
+    );
   }
 }
