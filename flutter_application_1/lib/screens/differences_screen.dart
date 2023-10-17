@@ -117,25 +117,28 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
             children: [
               // Top image
               Padding(
-                  padding: const EdgeInsets.only(top: 30.0),
-                  child: buildQuestionMarks(differenceAreas.length)),
-              Padding(
                 padding: const EdgeInsets.all(1.0) +
                     const EdgeInsets.only(top: 20.0),
                 child: buildImage(
                     context, widget.imagePair.topImage, leftImageKey),
               ),
-              // Spot the Differences text
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  "Differences remaining - $remainingDifferences",
-                  style: const TextStyle(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
+              // Question mark differences counter
+              if (remainingDifferences != 0)
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: buildQuestionMarks(differenceAreas.length),
+                  ),
+                ]),
+              if (remainingDifferences == 0)
+                const Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Text(
+                    "You found all the differences",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20),
                   ),
                 ),
-              ),
               //Bottom image
               Padding(
                 padding: const EdgeInsets.all(1.0),
