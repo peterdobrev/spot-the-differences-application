@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/highlighted_rect.dart';
+import 'package:flutter_application_1/models/hole_painter.dart';
 import 'package:flutter_application_1/models/image_pair.dart';
 
 class DifferencesScreen extends StatefulWidget {
@@ -25,6 +26,8 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
   late int remainingDifferences;
 
   int lives = 3;
+
+  bool showHole = true; // change later
 
   @override
   void initState() {
@@ -204,7 +207,11 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
               height: 30.0,
               width: 30.0,
               child: FloatingActionButton(
-                onPressed: () {},
+                onPressed: () {
+                  setState(() {
+                    showHole = !showHole;
+                  });
+                },
                 backgroundColor: Colors.white,
                 child: const Icon(Icons.settings),
               ),
@@ -226,6 +233,17 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
               imageName,
               fit: BoxFit.cover,
             ),
+            if (showHole) // Make sure you have a variable called showHole to control visibility
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: HolePainter(
+                    Rect.fromPoints(
+                      const Offset(0.1, 0.1), // Start point of the hole
+                      const Offset(0.2, 0.2), // End point of the hole
+                    ),
+                  ),
+                ),
+              ),
             ...highlightedRects.map((rect) {
               return HighlightedRect(rect: rect);
             }).toList(),
