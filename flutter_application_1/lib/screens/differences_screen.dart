@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/highlighted_rect.dart';
 import 'package:flutter_application_1/models/image_pair.dart';
+import 'package:flutter_application_1/models/hearts_widget.dart';
+import 'package:flutter_application_1/models/question_marks_widget.dart';
 
 class DifferencesScreen extends StatefulWidget {
   final ImagePair imagePair;
@@ -153,7 +155,7 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Padding(
                     padding: const EdgeInsets.all(15.0),
-                    child: buildQuestionMarks(differenceAreas.length),
+                    child: QuestionMarksWidget(count: remainingDifferences),
                   ),
                 ]),
               if (remainingDifferences == 0 && lives > 0)
@@ -195,7 +197,10 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
           Positioned(
             top: 10,
             left: 10,
-            child: buildHearts(),
+            child: HeartsWidget(
+              startingLives: 3,
+              lives: lives,
+            ),
           ),
           Positioned(
             top: 10,
@@ -230,51 +235,6 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
               return HighlightedRect(rect: rect);
             }).toList(),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildHearts() {
-    return Row(
-      children: List.generate(
-        3, // Assuming a total of 3 lives
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Icon(
-            Icons.favorite,
-            color: index < lives ? Colors.red : Colors.grey,
-            size: 30.0,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildQuestionMarks(int count) {
-    return Row(
-      children: List.generate(
-        count,
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors
-                    .lightBlue, // Choose the color of your circle outline here
-                width: 2.0, // Choose the width of your circle outline here
-              ),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(6.0),
-              child: Icon(
-                Icons.question_mark_outlined,
-                color: Colors.white,
-                size: 30.0,
-              ),
-            ),
-          ),
         ),
       ),
     );
