@@ -7,33 +7,157 @@ import 'package:flutter_application_1/models/question_marks_widget.dart';
 class DifferencesScreen extends StatefulWidget {
   final ImagePair imagePair;
 
-  const DifferencesScreen({
-    Key? key,
-    required this.imagePair,
-  }) : super(key: key);
+  const DifferencesScreen({Key? key, required this.imagePair})
+      : super(key: key);
+
   @override
-  // ignore: library_private_types_in_public_api
   _DifferencesScreenState createState() => _DifferencesScreenState();
 }
 
 class _DifferencesScreenState extends State<DifferencesScreen> {
   List<Rect> highlightedRects = [];
+  List<Rect> differenceAreas = [];
+  int remainingDifferences = 0;
+  int lives = 3;
 
   final GlobalKey leftImageKey = GlobalKey();
   final GlobalKey rightImageKey = GlobalKey();
 
-  List<Rect> differenceAreas = [];
-
-  late int remainingDifferences;
-
-  int lives = 3;
-
   @override
   void initState() {
     super.initState();
-    differenceAreas =
-        widget.imagePair.differenceAreas; // Initialize from widget
+    initDifferenceAreas();
+  }
+
+  void initDifferenceAreas() {
+    differenceAreas = widget.imagePair.differenceAreas;
     remainingDifferences = differenceAreas.length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          buildMainContent(),
+          buildOverlayWidgets(),
+        ],
+      ),
+    );
+  }
+
+  Widget buildMainContent() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        buildImage(context, widget.imagePair.topImage, leftImageKey),
+        buildQuestionMarkCounter(),
+        buildGameStatusText(),
+        buildImage(context, widget.imagePair.bottomImage, rightImageKey),
+        buildHintButton(),
+      ],
+    );
+  }
+
+  Widget buildOverlayWidgets() {
+    return Stack(
+      children: [
+        buildLivesIndicator(),
+        buildSettingsButton(),
+      ],
+    );
+  }
+
+  Widget buildLivesIndicator() {
+    return Positioned(
+      top: 10,
+      left: 10,
+      child: HeartsWidget(
+        startingLives: 3,
+        lives: lives,
+      ),
+    );
+  }
+
+  Widget buildSettingsButton() {
+    return Positioned(
+      top: 10,
+      right: 10,
+      child: SizedBox(
+        width: 30,
+        height: 30,
+        child: FloatingActionButton(
+          onPressed: () {},
+          backgroundColor: Colors.white,
+          child: const Icon(Icons.settings),
+        ),
+      ),
+    );
+  }
+
+  Widget buildQuestionMarkCounter() {
+    return (remainingDifferences > 0 && lives > 0)
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: QuestionMarksWidget(count: remainingDifferences),
+              ),
+            ],
+          )
+        : Container();
+  }
+
+  Widget buildGameStatusText() {
+    if (remainingDifferences == 0 && lives > 0) {
+      return buildStatusText("You found all the differences");
+    }
+
+    if (lives <= 0) {
+      return buildStatusText("You lost!");
+    }
+
+    return Container();
+  }
+
+  Widget buildStatusText(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 20),
+      ),
+    );
+  }
+
+  Widget buildHintButton() {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: Colors.yellow,
+        child: const Icon(Icons.lightbulb_outline),
+      ),
+    );
+  }
+
+  Widget buildImage(BuildContext context, String imageName, GlobalKey key) {
+    return GestureDetector(
+      onTapUp: (details) => onTap(details, context, key),
+      child: Container(
+        key: key,
+        child: Stack(
+          children: [
+            Image.asset(imageName, fit: BoxFit.cover),
+            ...highlightedRects
+                .map((rect) => HighlightedRect(rect: rect))
+                .toList(),
+          ],
+        ),
+      ),
+    );
   }
 
   void onTap(TapUpDetails details, BuildContext context, GlobalKey key) {
@@ -133,110 +257,5 @@ class _DifferencesScreenState extends State<DifferencesScreen> {
         }
       });
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Top image
-              Padding(
-                padding: const EdgeInsets.all(1.0) +
-                    const EdgeInsets.only(top: 20.0),
-                child: buildImage(
-                    context, widget.imagePair.topImage, leftImageKey),
-              ),
-              // Question mark differences counter
-              if (remainingDifferences != 0 && lives > 0)
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: QuestionMarksWidget(count: remainingDifferences),
-                  ),
-                ]),
-              if (remainingDifferences == 0 && lives > 0)
-                const Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    "You found all the differences",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20),
-                  ),
-                ),
-              if (lives <= 0)
-                const Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    "You lost!",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20),
-                  ),
-                ),
-
-              //Bottom image
-              Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: buildImage(
-                    context, widget.imagePair.bottomImage, rightImageKey),
-              ),
-              // Lightbulb button
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: FloatingActionButton(
-                  onPressed: () {},
-                  backgroundColor: Colors.yellow,
-                  child: const Icon(Icons.lightbulb_outline),
-                ),
-              ),
-            ],
-          ),
-          Positioned(
-            top: 10,
-            left: 10,
-            child: HeartsWidget(
-              startingLives: 3,
-              lives: lives,
-            ),
-          ),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: SizedBox(
-              height: 30.0,
-              width: 30.0,
-              child: FloatingActionButton(
-                onPressed: () {},
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.settings),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget buildImage(BuildContext context, String imageName, GlobalKey key) {
-    return GestureDetector(
-      onTapUp: (details) => onTap(details, context, key),
-      child: Container(
-        key: key,
-        child: Stack(
-          children: [
-            Image.asset(
-              imageName,
-              fit: BoxFit.cover,
-            ),
-            ...highlightedRects.map((rect) {
-              return HighlightedRect(rect: rect);
-            }).toList(),
-          ],
-        ),
-      ),
-    );
   }
 }
