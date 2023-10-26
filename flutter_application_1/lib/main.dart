@@ -1,28 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/image_pair.dart';
-import 'package:flutter_application_1/screens/differences_screen.dart';
+import 'package:flame/game.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_application_1/differences_game.dart';
 
-void main(List<String> args) {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-        title: "Spot the Differences",
-        theme: ThemeData.dark(),
-        home: DifferencesScreen(
-          imagePair: ImagePair(
-            topImage: 'assets/vintage_car_in_woods_2.png',
-            bottomImage: 'assets/vintage_car_in_woods_1.png',
-            differenceAreas: [
-              Rect.fromPoints(const Offset(0.2, 0.2), const Offset(0.39, 0.39)),
-              Rect.fromPoints(const Offset(0.5, 0.5), const Offset(0.69, 0.69)),
-            ],
-          ),
-        ));
-  }
+void main() {
+  final game = DifferencesGame();
+  runApp(GameWidget(game: game));
 }
