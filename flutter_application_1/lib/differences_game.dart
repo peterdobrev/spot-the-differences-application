@@ -21,21 +21,29 @@ class DifferencesGame extends FlameGame with TapDetector {
     final spriteBottom = await Sprite.load(image2Path);
     final circleSprite = await Sprite.load(circleImagePath);
 
-    //final screenHalfHeight = size.y / 2;
     final screenWidth = size.x;
+    final screenHeight = size.y;
 
     final imageWidth = screenWidth;
     final imageHeight = imageWidth / aspectRatio;
 
+    final double totalHeight = (imageHeight * 2) + size.x * spaceBetweenImages;
+
+    final double startingY = (screenHeight - totalHeight) / 2;
+
     topImage = SpriteComponent(
       sprite: spriteTop,
-      position: Vector2(0, 0), // Top of the screen
+      position: Vector2(0, startingY), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
     );
 
     bottomImage = SpriteComponent(
       sprite: spriteBottom,
-      position: Vector2(0, imageHeight), // Below the first image
+      position: Vector2(
+          0,
+          startingY +
+              imageHeight +
+              size.x * spaceBetweenImages), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
     );
 
@@ -43,7 +51,7 @@ class DifferencesGame extends FlameGame with TapDetector {
     add(bottomImage);
 
     initDifferenceAreas(size.x, imageHeight);
-    addCircleOverlays(circleSprite, imageHeight);
+    addCircleOverlays(circleSprite, imageHeight, startingY);
   }
 
   @override
@@ -63,36 +71,38 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   void initDifferenceAreas(double imageWidth, double imageHeight) {
     differenceAreas = [
-      Rect.fromPoints(Offset(imageWidth * 0.1, imageHeight * 0.2),
-          Offset(imageWidth * 0.35, imageHeight * 0.45)),
-      Rect.fromPoints(Offset(imageWidth * 0.5, imageHeight * 0.5),
-          Offset(imageWidth * 0.85, imageHeight * 0.85)),
+      Rect.fromPoints(Offset(imageWidth * 0.1, imageHeight * 0.1),
+          Offset(imageWidth * 0.3, imageHeight * 0.3)),
+      Rect.fromPoints(Offset(imageWidth * 0.6, imageHeight * 0.6),
+          Offset(imageWidth * 0.8, imageHeight * 0.8)),
     ];
     remainingDifferences = differenceAreas.length;
   }
 
-  void addCircleOverlays(Sprite circleSprite, double imageHeight) {
+  void addCircleOverlays(
+      Sprite circleSprite, double imageHeight, double startingY) {
     for (var area in differenceAreas) {
-      final circle1 = OverlayCircle(
+      final circleTop = OverlayCircle(
         circleSprite,
-        Vector2(area.left, area.top),
+        Vector2(area.left, area.top + startingY),
         Vector2(min(area.width, area.height), min(area.width, area.height)),
       );
 
-      final circle2 = OverlayCircle(
+      final circleBottom = OverlayCircle(
         circleSprite,
-        Vector2(area.left, area.top + imageHeight),
+        Vector2(area.left,
+            area.top + imageHeight + startingY + size.x * spaceBetweenImages),
         Vector2(min(area.width, area.height), min(area.width, area.height)),
       );
 
-      circle1.opacity = 0;
-      circle2.opacity = 0;
+      circleTop.opacity = 0;
+      circleBottom.opacity = 0;
 
-      circleOverlaysTop.add(circle1);
-      circleOverlaysBottom.add(circle2);
+      circleOverlaysTop.add(circleTop);
+      circleOverlaysBottom.add(circleBottom);
 
-      add(circle1);
-      add(circle2);
+      add(circleTop);
+      add(circleBottom);
     }
   }
 
