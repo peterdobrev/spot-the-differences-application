@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/vignette_overlay.dart';
+import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
 
@@ -25,6 +26,8 @@ class DifferencesGame extends FlameGame with TapDetector {
   int lives = startingLives;
   List<Heart> hearts = [];
 
+  late Sprite wrongSprite;
+
   @override
   Future<void> onLoad() async {
     final spriteTop = await Sprite.load(image1Path);
@@ -32,6 +35,7 @@ class DifferencesGame extends FlameGame with TapDetector {
     final circleSprite = await Sprite.load(circleImagePath);
     final vignette = await Sprite.load(vignetteImagePath);
     final heartSprite = await Sprite.load(heartImagePath);
+    wrongSprite = await Sprite.load(wrongImagePath);
 
     final screenWidth = size.x;
     final screenHeight = size.y;
@@ -136,25 +140,28 @@ class DifferencesGame extends FlameGame with TapDetector {
   bool onTapDown(TapDownInfo info) {
     final tapPos = info.eventPosition.widget;
 
-    bool foundDifference = false;
+    if (topImage.toRect().contains(tapPos.toOffset()) ||
+        bottomImage.toRect().contains(tapPos.toOffset())) {
+      bool foundDifference = false;
 
-    for (int i = 0; i < circleOverlaysTop.length; i++) {
-      if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
-          circleOverlaysBottom[i].toRect().contains(tapPos.toOffset())) {
-        circleOverlaysTop[i].opacity = 1.0;
-        circleOverlaysBottom[i].opacity = 1.0;
+      for (int i = 0; i < circleOverlaysTop.length; i++) {
+        if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
+            circleOverlaysBottom[i].toRect().contains(tapPos.toOffset())) {
+          circleOverlaysTop[i].opacity = 1.0;
+          circleOverlaysBottom[i].opacity = 1.0;
 
-        circleOverlaysTop[i].scaleUp();
-        circleOverlaysBottom[i].scaleUp();
+          circleOverlaysTop[i].scaleUp();
+          circleOverlaysBottom[i].scaleUp();
 
-        foundDifference = true;
-        break;
+          foundDifference = true;
+          break;
+        }
       }
-    }
 
-    if (foundDifference) {
-    } else {
-      onWrongTap();
+      if (foundDifference) {
+      } else {
+        onWrongTap(tapPos);
+      }
     }
 
     return true;
@@ -162,7 +169,7 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   void onDifferenceSpotted(Rect spottedArea) {}
 
-  void onWrongTap() {
+  void onWrongTap(Vector2 tapPos) {
     if (lives > 0) {
       lives--;
       updateHearts();
@@ -172,6 +179,15 @@ class DifferencesGame extends FlameGame with TapDetector {
       print("Game Over");
       // Implement your game-over logic here
     }
+
+    final wrongTap = WrongTap(
+      wrongSprite,
+      tapPos,
+      Vector2(50, 50),
+    );
+
+    add(wrongTap);
+    wrongTap.playWrongTapAnimations();
   }
 
   void updateHearts() {
@@ -188,7 +204,7 @@ class DifferencesGame extends FlameGame with TapDetector {
         const Offset(0, 0),
         Offset(size.x, size.y),
       ),
-      Paint()..color = backgroundColor, // Set your desired color here
+      Paint()..color = backgroundColor,
     );
 
     // Don't forget to call super.render()
