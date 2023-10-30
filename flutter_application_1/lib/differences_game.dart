@@ -6,6 +6,7 @@ import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/star.dart';
+import 'package:flutter_application_1/utils.dart';
 import 'package:flutter_application_1/vignette_overlay.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
@@ -214,11 +215,10 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   void onDifferenceSpotted(Vector2 tapPos, bool hasBeenFoundBefore) {
-    print("Found a difference!");
-    if (remainingDifferences > 0 && !hasBeenFoundBefore) remainingDifferences--;
-    updateStars(tapPos);
-
-    print("Remaining differences: ${remainingDifferences}");
+    if (remainingDifferences > 0 && !hasBeenFoundBefore) {
+      remainingDifferences--;
+      updateStars(tapPos);
+    }
   }
 
   void onWrongTap(Vector2 tapPos) {
@@ -251,7 +251,27 @@ class DifferencesGame extends FlameGame with TapDetector {
   void updateStars(Vector2 tapPos) {
     if (remainingDifferences >= 0 && remainingDifferences < hearts.length) {
       stars[remainingDifferences].lighten();
+      createParticleAlongBezier(tapPos, stars[remainingDifferences].position);
     }
+  }
+
+  void createParticleAlongBezier(Vector2 startPos, Vector2 endPos) {
+    var particles = Particle.generate(
+      count: 15,
+      generator: (i) => MovingParticle(
+        from: startPos,
+        to: endPos,
+        curve: Curves.easeOutQuad,
+        child: CircleParticle(
+          radius: getRandomDouble(1.0, 2),
+          lifespan: getRandomDouble(0.7, 7),
+          paint: Paint()..color = Colors.white,
+        ),
+      ),
+    );
+    add(ParticleSystemComponent(
+      particle: particles,
+    ));
   }
 
   @override
