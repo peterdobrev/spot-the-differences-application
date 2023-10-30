@@ -61,6 +61,7 @@ flutter:
     - assets/images/heart.png
     - assets/images/vignette_overlay.png
     - assets/images/wrong_tap.png
+    - assets/images/star.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
