@@ -1,8 +1,9 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flame/particles.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/star.dart';
 import 'package:flutter_application_1/vignette_overlay.dart';
@@ -122,11 +123,10 @@ class DifferencesGame extends FlameGame with TapDetector {
       );
 
       final circleBottom = OverlayCircle(
-        circleSprite,
-        Vector2(area.left,
-            area.top + imageHeight + startingY + size.x * spaceBetweenImages),
-        Vector2(max(area.width, area.height), max(area.width, area.height)),
-      );
+          circleSprite,
+          Vector2(area.left,
+              area.top + imageHeight + startingY + size.x * spaceBetweenImages),
+          Vector2(max(area.width, area.height), max(area.width, area.height)));
 
       circleTop.opacity = 0;
       circleBottom.opacity = 0;
@@ -186,11 +186,17 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   void handleImageTap(Vector2 tapPos) {
     bool foundDifference = false;
+    bool hasBeenFoundBefore = false;
     for (int i = 0; i < circleOverlaysTop.length; i++) {
       if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
           circleOverlaysBottom[i].toRect().contains(tapPos.toOffset())) {
         circleOverlaysTop[i].opacity = 1.0;
         circleOverlaysBottom[i].opacity = 1.0;
+
+        if (circleOverlaysTop[i].hasBeenClicked ||
+            circleOverlaysBottom[i].hasBeenClicked) {
+          hasBeenFoundBefore = true;
+        }
 
         circleOverlaysTop[i].scaleUp();
         circleOverlaysBottom[i].scaleUp();
@@ -201,21 +207,19 @@ class DifferencesGame extends FlameGame with TapDetector {
     }
 
     if (foundDifference) {
-      removeDifferenceArea(tapPos);
+      onDifferenceSpotted(tapPos, hasBeenFoundBefore);
     } else {
       onWrongTap(tapPos);
     }
   }
 
-  void removeDifferenceArea(Vector2 tapPos) {
+  void onDifferenceSpotted(Vector2 tapPos, bool hasBeenFoundBefore) {
     print("Found a difference!");
-    remainingDifferences--;
-    updateStars();
+    if (remainingDifferences > 0 && !hasBeenFoundBefore) remainingDifferences--;
+    updateStars(tapPos);
 
-    print("Remaining differences: ${differenceAreas.length}");
+    print("Remaining differences: ${remainingDifferences}");
   }
-
-  void onDifferenceSpotted(Rect spottedArea) {}
 
   void onWrongTap(Vector2 tapPos) {
     if (lives > 0) {
@@ -244,7 +248,7 @@ class DifferencesGame extends FlameGame with TapDetector {
     }
   }
 
-  void updateStars() {
+  void updateStars(Vector2 tapPos) {
     if (remainingDifferences >= 0 && remainingDifferences < hearts.length) {
       stars[remainingDifferences].lighten();
     }

@@ -17,3 +17,5 @@ const double ratioOffsetHeartsScreenWidth = 0.08;
 const double ratioOffsetHeartsScreenHeight = 0.05;
 const double wrongTapSizeRatio = 0.08;
 const Color backgroundColor = Color.fromARGB(255, 61, 61, 61);
+const double lightenDelay = 1.0;
+const double particlesLifecycle = 1.0;
