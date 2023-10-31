@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/constants.dart';
 
 class Star extends SpriteComponent {
   Star(Sprite sprite, Vector2 size, Vector2 position)
@@ -32,5 +31,14 @@ class Star extends SpriteComponent {
         EffectController(duration: 0.5),
       ),
     );
+  }
+
+  void scaleUp() {
+    SequenceEffect effect = SequenceEffect([
+      ScaleEffect.to(Vector2.all(0.7), EffectController(duration: 0.01)),
+      ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.15)),
+      ScaleEffect.to(Vector2.all(1), EffectController(duration: 0.15))
+    ]);
+    add(effect);
   }
 }
