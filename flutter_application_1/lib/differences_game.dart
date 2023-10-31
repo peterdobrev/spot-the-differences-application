@@ -2,17 +2,18 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/firework.dart';
 import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/star.dart';
-import 'package:flutter_application_1/utils.dart';
 import 'package:flutter_application_1/vignette_overlay.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
 
 class DifferencesGame extends FlameGame with TapDetector {
+  int currentLevelIndex = 0;
+
   //images
   late SpriteComponent topImage;
   late SpriteComponent bottomImage;
@@ -227,10 +228,7 @@ class DifferencesGame extends FlameGame with TapDetector {
       updateHearts();
     }
 
-    if (lives <= 0) {
-      print("Game Over");
-      // Implement your game-over logic here
-    }
+    if (lives <= 0) {}
 
     final wrongTap = WrongTap(
       wrongSprite,
@@ -262,51 +260,6 @@ class DifferencesGame extends FlameGame with TapDetector {
         particle: fireworkParticle(),
         position: position,
       ),
-    );
-  }
-
-  Particle fireworkParticle() {
-    // A palette to paint over the "sky"
-    final paints = [
-      Colors.amber,
-      Colors.amberAccent,
-      Colors.red,
-      Colors.redAccent,
-      Colors.yellow,
-      Colors.yellowAccent,
-      // Adds a nice "lense" tint
-      // to overall effect
-      Colors.blue,
-    ].map((color) => Paint()..color = color).toList();
-
-    return Particle.generate(
-      generator: (i) {
-        final initialSpeed = randomVector2(fireworksInitialSpeed);
-        final deceleration = initialSpeed * fireworksDecelerationMultipler;
-        final gravity = Vector2(0, 40);
-
-        return AcceleratedParticle(
-          speed: initialSpeed,
-          acceleration: deceleration + gravity,
-          child: ComputedParticle(
-            renderer: (canvas, particle) {
-              final paint = randomElement(paints);
-              // Override the color to dynamically update opacity
-              paint.color = paint.color.withOpacity(1 - particle.progress);
-
-              canvas.drawCircle(
-                Offset.zero,
-                // Closer to the end of lifespan particles
-                // will turn into larger glaring circles
-                Random().nextDouble() * particle.progress > .6
-                    ? Random().nextDouble() * (50 * particle.progress)
-                    : 2 + (3 * particle.progress),
-                paint,
-              );
-            },
-          ),
-        );
-      },
     );
   }
 
