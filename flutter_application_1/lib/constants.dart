@@ -1,7 +1,9 @@
 import 'dart:ui';
 
-const String image1Path = 'vintage_car_in_woods_1.png';
-const String image2Path = 'vintage_car_in_woods_2.png';
+const String topImagePath_1 = 'vintage_car_in_woods_1.png';
+const String bottomImagePath_1 = 'vintage_car_in_woods_2.png';
+const String topImagePath_2 = 'animal_park_1.png';
+const String bottomImagePath_2 = 'animal_park_2.png';
 const String circleImagePath = 'circle.png';
 const String wrongImagePath = 'wrong_tap.png';
 const String heartImagePath = 'heart.png';

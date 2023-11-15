@@ -5,15 +5,16 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/firework.dart';
 import 'package:flutter_application_1/heart.dart';
+import 'package:flutter_application_1/levels_data.dart';
 import 'package:flutter_application_1/star.dart';
 import 'package:flutter_application_1/vignette_overlay.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
+import 'game_state.dart';
 
 class DifferencesGame extends FlameGame with TapDetector {
-  int currentLevelIndex = 0;
-
+  GameState gameState = GameState();
   //images
   late SpriteComponent topImage;
   late SpriteComponent bottomImage;
@@ -24,21 +25,34 @@ class DifferencesGame extends FlameGame with TapDetector {
   List<Rect> differenceAreas = [];
   List<OverlayCircle> circleOverlaysTop = []; // first image
   List<OverlayCircle> circleOverlaysBottom = []; //second image
-  int remainingDifferences = 0;
   List<Star> stars = [];
 
   // lives
-  int lives = startingLives;
   List<Heart> hearts = [];
 
   late Sprite wrongSprite;
 
   @override
   Future<void> onLoad() async {
-    final spriteTop = await Sprite.load(image1Path);
-    final spriteBottom = await Sprite.load(image2Path);
-    final circleSprite = await Sprite.load(circleImagePath);
     final vignette = await Sprite.load(vignetteImagePath);
+    vignetteOverlay = VignetteOverlay(
+      vignette,
+      Vector2.zero(),
+      size,
+    );
+
+    add(vignetteOverlay);
+
+    await loadLevel();
+  }
+
+  Future<void> loadLevel() async {
+    resetGameState();
+    final spriteTop =
+        await Sprite.load(levels[gameState.currentLevelIndex].topImagePath);
+    final spriteBottom =
+        await Sprite.load(levels[gameState.currentLevelIndex].bottomImagePath);
+    final circleSprite = await Sprite.load(circleImagePath);
     final heartSprite = await Sprite.load(heartImagePath);
     final starSprite = await Sprite.load(starImagePath);
     wrongSprite = await Sprite.load(wrongImagePath);
@@ -52,12 +66,6 @@ class DifferencesGame extends FlameGame with TapDetector {
     final double totalHeight = (imageHeight * 2) + size.x * spaceBetweenImages;
 
     final double startingY = (screenHeight - totalHeight) / 2;
-
-    vignetteOverlay = VignetteOverlay(
-      vignette,
-      Vector2.zero(),
-      size,
-    );
 
     topImage = SpriteComponent(
       sprite: spriteTop,
@@ -75,7 +83,6 @@ class DifferencesGame extends FlameGame with TapDetector {
       size: Vector2(imageWidth, imageHeight),
     );
 
-    add(vignetteOverlay);
     add(topImage);
     add(bottomImage);
 
@@ -86,13 +93,12 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   void initDifferenceAreas(double imageWidth, double imageHeight) {
-    differenceAreas = [
-      Rect.fromPoints(Offset(imageWidth * 0.1, imageHeight * 0.1),
-          Offset(imageWidth * 0.3, imageHeight * 0.3)),
-      Rect.fromPoints(Offset(imageWidth * 0.6, imageHeight * 0.6),
-          Offset(imageWidth * 0.8, imageHeight * 0.8)),
-    ];
-    remainingDifferences = differenceAreas.length;
+    for (var element in levels[gameState.currentLevelIndex].differences) {
+      differenceAreas.add(Rect.fromPoints(
+          Offset(element.left * imageWidth, element.top * imageHeight),
+          Offset(element.right * imageWidth, element.bottom * imageHeight)));
+    }
+    gameState.remainingDifferences = differenceAreas.length;
   }
 
   void addHearts(Sprite heartSprite) {
@@ -172,7 +178,7 @@ class DifferencesGame extends FlameGame with TapDetector {
   bool onTapDown(TapDownInfo info) {
     final tapPos = info.eventPosition.widget;
 
-    if (lives > 0) {
+    if (gameState.lives > 0) {
       if (isTapOnImage(tapPos)) {
         handleImageTap(tapPos);
       }
@@ -189,6 +195,10 @@ class DifferencesGame extends FlameGame with TapDetector {
   void handleImageTap(Vector2 tapPos) {
     bool foundDifference = false;
     bool hasBeenFoundBefore = false;
+
+    /*bool isTopImage = topImage.toRect().contains(tapPos.toOffset());
+    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());*/
+
     for (int i = 0; i < circleOverlaysTop.length; i++) {
       if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
           circleOverlaysBottom[i].toRect().contains(tapPos.toOffset())) {
@@ -208,6 +218,15 @@ class DifferencesGame extends FlameGame with TapDetector {
       }
     }
 
+    /*if (isTopImage || isBottomImage) {
+      Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
+      Vector2 normalizedPos = Vector2(
+        (tapPos.x - imageRect.left) / imageRect.width,
+        (tapPos.y - imageRect.top) / imageRect.height,
+      );
+      print("Normalized Tap Position: $normalizedPos");
+    }*/
+
     if (foundDifference) {
       onDifferenceSpotted(tapPos, hasBeenFoundBefore);
     } else {
@@ -216,19 +235,53 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   void onDifferenceSpotted(Vector2 tapPos, bool hasBeenFoundBefore) {
-    if (remainingDifferences > 0 && !hasBeenFoundBefore) {
-      remainingDifferences--;
+    if (gameState.remainingDifferences > 0 && !hasBeenFoundBefore) {
+      gameState.remainingDifferences--;
       updateStars(tapPos);
+    }
+
+    if (gameState.remainingDifferences <= 0) {
+      onLevelCompleted();
     }
   }
 
+  Future<void> onLevelCompleted() async {
+    print('Level completed!');
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Increment the current level index to load the next level
+    // Make sure to handle the scenario where this is the last level
+    gameState.currentLevelIndex++;
+    if (gameState.currentLevelIndex >= levels.length) {
+      // Handle the case when all levels are complete
+      // Maybe go back to the first level or show a completion screen
+      gameState.currentLevelIndex =
+          0; // Looping back to first level for example
+    }
+
+    removeLastLevelImages();
+    // Call loadLevel to load the next level
+    await loadLevel();
+  }
+
+  Future<void> onLevelFail() async {
+    print('Level failed!');
+    await Future.delayed(const Duration(seconds: 1));
+
+    removeLastLevelImages();
+    // Call loadLevel to load the next level
+    await loadLevel();
+  }
+
   void onWrongTap(Vector2 tapPos) {
-    if (lives > 0) {
-      lives--;
+    if (gameState.lives > 0) {
+      gameState.lives--;
       updateHearts();
     }
 
-    if (lives <= 0) {}
+    if (gameState.lives <= 0) {
+      onLevelFail();
+    }
 
     final wrongTap = WrongTap(
       wrongSprite,
@@ -241,16 +294,17 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   void updateHearts() {
-    if (lives >= 0 && lives < hearts.length) {
-      hearts[lives].darken();
+    if (gameState.lives >= 0 && gameState.lives < hearts.length) {
+      hearts[gameState.lives].darken();
     }
   }
 
   void updateStars(Vector2 tapPos) {
-    if (remainingDifferences >= 0 && remainingDifferences < hearts.length) {
-      stars[remainingDifferences].lighten();
-      stars[remainingDifferences].scaleUp();
-      playFireworkParticles(stars[remainingDifferences].position);
+    if (gameState.remainingDifferences >= 0 &&
+        gameState.remainingDifferences < hearts.length) {
+      stars[gameState.remainingDifferences].lighten();
+      stars[gameState.remainingDifferences].scaleUp();
+      playFireworkParticles(stars[gameState.remainingDifferences].position);
     }
   }
 
@@ -261,6 +315,24 @@ class DifferencesGame extends FlameGame with TapDetector {
         position: position,
       ),
     );
+  }
+
+  void resetGameState() {
+    differenceAreas.clear();
+    circleOverlaysTop.clear();
+    circleOverlaysBottom.clear();
+    stars.clear();
+    hearts.clear();
+
+    gameState.reset();
+  }
+
+  void removeLastLevelImages() {
+    remove(topImage);
+    remove(bottomImage);
+    removeAll(circleOverlaysBottom);
+    removeAll(circleOverlaysTop);
+    removeAll(stars);
   }
 
   @override

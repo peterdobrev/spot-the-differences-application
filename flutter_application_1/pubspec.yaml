@@ -57,6 +57,8 @@ flutter:
   assets:
     - assets/images/vintage_car_in_woods_1.png
     - assets/images/vintage_car_in_woods_2.png
+    - assets/images/animal_park_1.png
+    - assets/images/animal_park_2.png
     - assets/images/circle.png
     - assets/images/heart.png
     - assets/images/vignette_overlay.png
