@@ -23,3 +23,6 @@ const double lightenDelay = 1.0;
 const double particlesLifecycle = 1.0;
 const double fireworksInitialSpeed = 600;
 const double fireworksDecelerationMultipler = -1;
+const String mainMenuOverlayIdentifier = 'MainMenu';
+const String levelCompleteOverlayIdentifier = 'LevelComplete';
+const String gameOverOverlayIdentifier = 'GameOver';

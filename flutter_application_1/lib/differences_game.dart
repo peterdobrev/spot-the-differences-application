@@ -247,7 +247,12 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   Future<void> onLevelCompleted() async {
     print('Level completed!');
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 700));
+    overlays.add(levelCompleteOverlayIdentifier);
+  }
+
+  Future<void> nextLevel() async {
+    await Future.delayed(const Duration(milliseconds: 500));
 
     // Increment the current level index to load the next level
     // Make sure to handle the scenario where this is the last level
@@ -265,8 +270,13 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   Future<void> onLevelFail() async {
+    await Future.delayed(const Duration(milliseconds: 700));
     print('Level failed!');
-    await Future.delayed(const Duration(seconds: 1));
+    overlays.add(gameOverOverlayIdentifier);
+  }
+
+  Future<void> resetLevel() async {
+    await Future.delayed(const Duration(milliseconds: 500));
 
     removeLastLevelImages();
     // Call loadLevel to load the next level
