@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/constants.dart';
 import 'package:flutter_application_1/differences_game.dart';
 
 class MainMenu extends StatefulWidget {
@@ -7,6 +8,7 @@ class MainMenu extends StatefulWidget {
   const MainMenu({super.key, required this.game});
 
   @override
+  // ignore: library_private_types_in_public_api
   _MainMenuState createState() => _MainMenuState();
 }
 
@@ -72,7 +74,7 @@ class _MainMenuState extends State<MainMenu>
                     height: 75,
                     child: ElevatedButton(
                       onPressed: () {
-                        widget.game.overlays.remove('MainMenu');
+                        widget.game.overlays.remove(mainMenuOverlayIdentifier);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: whiteTextColor,
@@ -92,7 +94,7 @@ class _MainMenuState extends State<MainMenu>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: whiteTextColor,
-                      fontSize: 14,
+                      fontSize: 15,
                     ),
                   ),
                 ],

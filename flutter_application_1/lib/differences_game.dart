@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/firework.dart';
 import 'package:flutter_application_1/heart.dart';
@@ -246,7 +247,9 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   Future<void> onLevelCompleted() async {
-    print('Level completed!');
+    if (kDebugMode) {
+      print('Level completed!');
+    }
     await Future.delayed(const Duration(milliseconds: 700));
     overlays.add(levelCompleteOverlayIdentifier);
   }
@@ -271,7 +274,9 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   Future<void> onLevelFail() async {
     await Future.delayed(const Duration(milliseconds: 700));
-    print('Level failed!');
+    if (kDebugMode) {
+      print('Level failed!');
+    }
     overlays.add(gameOverOverlayIdentifier);
   }
 

@@ -8,6 +8,7 @@ class GameOver extends StatefulWidget {
   const GameOver({super.key, required this.game});
 
   @override
+  // ignore: library_private_types_in_public_api
   _GameOverState createState() => _GameOverState();
 }
 
