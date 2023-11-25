@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/constants.dart';
 import 'package:flutter_application_1/differences_game.dart';
+import 'package:flame_audio/flame_audio.dart';
 
 class GameOver extends StatefulWidget {
   final DifferencesGame game;
@@ -39,6 +40,7 @@ class _GameOverState extends State<GameOver>
     ]).animate(_controller);
 
     _controller.forward();
+    FlameAudio.play(gameOverSound, volume: 0.6);
   }
 
   @override

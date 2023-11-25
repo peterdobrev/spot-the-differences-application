@@ -1,3 +1,4 @@
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/constants.dart';
 import 'package:flutter_application_1/differences_game.dart';
@@ -19,6 +20,7 @@ class _LevelCompleteState extends State<LevelComplete>
 
   @override
   void initState() {
+    FlameAudio.play(levelCompleteSound);
     super.initState();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 350),

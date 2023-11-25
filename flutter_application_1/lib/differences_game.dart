@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flame/input.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/firework.dart';
@@ -43,6 +45,13 @@ class DifferencesGame extends FlameGame with TapDetector {
     );
 
     add(vignetteOverlay);
+
+    await FlameAudio.audioCache.loadAll([
+      correctTapSound,
+      wrongTapSound,
+      levelCompleteSound,
+      gameOverSound,
+    ]);
 
     await loadLevel();
   }
@@ -239,6 +248,7 @@ class DifferencesGame extends FlameGame with TapDetector {
     if (gameState.remainingDifferences > 0 && !hasBeenFoundBefore) {
       gameState.remainingDifferences--;
       updateStars(tapPos);
+      FlameAudio.play(correctTapSound);
     }
 
     if (gameState.remainingDifferences <= 0) {
@@ -305,7 +315,7 @@ class DifferencesGame extends FlameGame with TapDetector {
     );
 
     add(wrongTap);
-    wrongTap.playWrongTapAnimations();
+    wrongTap.playEffects();
   }
 
   void updateHearts() {

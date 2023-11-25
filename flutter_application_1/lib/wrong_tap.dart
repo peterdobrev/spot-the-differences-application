@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_application_1/constants.dart';
 import 'package:flutter_application_1/utils.dart';
 
 class WrongTap extends SpriteComponent {
@@ -10,6 +13,11 @@ class WrongTap extends SpriteComponent {
             position: position,
             size: size,
             anchor: Anchor.center);
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+  }
 
   void playWrongTapAnimations() {
     opacity = 1;
@@ -33,5 +41,19 @@ class WrongTap extends SpriteComponent {
     add(scaleEffect);
     add(rotateEffect);
     add(opacityEffect);
+  }
+
+  void playWrongTapVibration() {
+    HapticFeedback.lightImpact();
+  }
+
+  void playWrongTapSound() {
+    FlameAudio.play(wrongTapSound);
+  }
+
+  void playEffects() {
+    playWrongTapAnimations();
+    playWrongTapVibration();
+    playWrongTapSound();
   }
 }

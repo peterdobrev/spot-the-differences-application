@@ -26,3 +26,7 @@ const double fireworksDecelerationMultipler = -1;
 const String mainMenuOverlayIdentifier = 'MainMenu';
 const String levelCompleteOverlayIdentifier = 'LevelComplete';
 const String gameOverOverlayIdentifier = 'GameOver';
+const String levelCompleteSound = 'level_complete.mp3';
+const String gameOverSound = 'level_fail.mp3';
+const String wrongTapSound = 'drum_failure.mp3';
+const String correctTapSound = 'ding.mp3';
