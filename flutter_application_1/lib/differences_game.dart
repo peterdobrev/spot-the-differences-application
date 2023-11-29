@@ -9,8 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/background_layer.dart';
 import 'package:flutter_application_1/firework.dart';
 import 'package:flutter_application_1/heart.dart';
+import 'package:flutter_application_1/hint_twinkle.dart';
 import 'package:flutter_application_1/levels_data.dart';
 import 'package:flutter_application_1/star.dart';
+import 'package:flutter_application_1/utils.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
@@ -24,6 +26,16 @@ class DifferencesGame extends FlameGame with TapDetector {
 
   late BackgroundLayer vignetteOverlay;
 
+  late Sprite wrongSprite;
+  late Sprite heartSprite;
+  late Sprite starSprite;
+  late Sprite hintSprite;
+  late Sprite circleSprite;
+
+  late SpriteButtonComponent hintButton;
+
+  //late ButtonComponent hintButton;
+
   //difference areas
   List<Rect> differenceAreas = [];
   List<OverlayCircle> circleOverlaysTop = []; // first image
@@ -33,12 +45,21 @@ class DifferencesGame extends FlameGame with TapDetector {
   // lives
   List<Heart> hearts = [];
 
-  late Sprite wrongSprite;
+  List<HintTwinkle> hintTwinkles = [];
 
   @override
   Future<void> onLoad() async {
     final vignette = await Sprite.load(vignetteImagePath);
     vignetteOverlay = BackgroundLayer(vignette, size);
+
+    circleSprite = await Sprite.load(circleImagePath);
+    heartSprite = await Sprite.load(heartImagePath);
+    starSprite = await Sprite.load(starImagePath);
+    wrongSprite = await Sprite.load(wrongImagePath);
+    hintSprite = await Sprite.load(hintImagePath);
+
+    final hintButtonSprite = await Sprite.load(hintButtonImagePath);
+    addHintButton(hintButtonSprite);
 
     await FlameAudio.audioCache.loadAll([
       correctTapSound,
@@ -50,16 +71,24 @@ class DifferencesGame extends FlameGame with TapDetector {
     await loadLevel();
   }
 
+  void addHintButton(Sprite hintButtonSprite) {
+    // Add a button on the bottom of the screen
+    hintButton = SpriteButtonComponent(
+        button: hintButtonSprite,
+        buttonDown: circleSprite,
+        size: Vector2(60, 60),
+        position: Vector2(size.x / 2, size.y - 60),
+        anchor: Anchor.center);
+
+    add(hintButton);
+  }
+
   Future<void> loadLevel() async {
     resetGameState();
     final spriteTop =
         await Sprite.load(levels[gameState.currentLevelIndex].topImagePath);
     final spriteBottom =
         await Sprite.load(levels[gameState.currentLevelIndex].bottomImagePath);
-    final circleSprite = await Sprite.load(circleImagePath);
-    final heartSprite = await Sprite.load(heartImagePath);
-    final starSprite = await Sprite.load(starImagePath);
-    wrongSprite = await Sprite.load(wrongImagePath);
 
     final screenWidth = size.x;
     final screenHeight = size.y;
@@ -182,18 +211,19 @@ class DifferencesGame extends FlameGame with TapDetector {
   bool onTapDown(TapDownInfo info) {
     final tapPos = info.eventPosition.widget;
 
-    if (gameState.lives > 0) {
-      if (isTapOnImage(tapPos)) {
+    if (gameState.lives > 0 && gameState.remainingDifferences > 0) {
+      if (isTapOnAnyImage(tapPos)) {
         handleImageTap(tapPos);
+      } else if (isTapOnButton(tapPos, hintButton)) {
+        displayHint();
       }
     }
 
     return true;
   }
 
-  bool isTapOnImage(Vector2 tapPos) {
-    return topImage.toRect().contains(tapPos.toOffset()) ||
-        bottomImage.toRect().contains(tapPos.toOffset());
+  bool isTapOnAnyImage(Vector2 tapPos) {
+    return isTapOnImage(tapPos, topImage) || isTapOnImage(tapPos, bottomImage);
   }
 
   void handleImageTap(Vector2 tapPos) {
@@ -238,6 +268,19 @@ class DifferencesGame extends FlameGame with TapDetector {
     }
   }
 
+  void displayHint() {
+    for (int i = 0; i < circleOverlaysTop.length; i++) {
+      if (circleOverlaysTop[i].opacity == 0.0) {
+        double hintSize = getRandomDouble(15, 20);
+        addHintTwinkle(circleOverlaysBottom[i].position + randomVector2(40),
+            Vector2(hintSize, hintSize));
+        addHintTwinkle(circleOverlaysTop[i].position + randomVector2(40),
+            Vector2(hintSize, hintSize));
+        break;
+      }
+    }
+  }
+
   void onDifferenceSpotted(Vector2 tapPos, bool hasBeenFoundBefore) {
     if (gameState.remainingDifferences > 0 && !hasBeenFoundBefore) {
       gameState.remainingDifferences--;
@@ -248,48 +291,8 @@ class DifferencesGame extends FlameGame with TapDetector {
     if (gameState.remainingDifferences <= 0) {
       onLevelCompleted();
     }
-  }
 
-  Future<void> onLevelCompleted() async {
-    if (kDebugMode) {
-      print('Level completed!');
-    }
-    await Future.delayed(const Duration(milliseconds: 700));
-    overlays.add(levelCompleteOverlayIdentifier);
-  }
-
-  Future<void> nextLevel() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Increment the current level index to load the next level
-    // Make sure to handle the scenario where this is the last level
-    gameState.currentLevelIndex++;
-    if (gameState.currentLevelIndex >= levels.length) {
-      // Handle the case when all levels are complete
-      // Maybe go back to the first level or show a completion screen
-      gameState.currentLevelIndex =
-          0; // Looping back to first level for example
-    }
-
-    removeLastLevelImages();
-    // Call loadLevel to load the next level
-    await loadLevel();
-  }
-
-  Future<void> onLevelFail() async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (kDebugMode) {
-      print('Level failed!');
-    }
-    overlays.add(gameOverOverlayIdentifier);
-  }
-
-  Future<void> resetLevel() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    removeLastLevelImages();
-    // Call loadLevel to load the next level
-    await loadLevel();
+    removeAllHintTwinkles();
   }
 
   void onWrongTap(Vector2 tapPos) {
@@ -310,6 +313,48 @@ class DifferencesGame extends FlameGame with TapDetector {
 
     add(wrongTap);
     wrongTap.playEffects();
+  }
+
+  Future<void> onLevelCompleted() async {
+    if (kDebugMode) {
+      print('Level completed!');
+    }
+    await Future.delayed(const Duration(milliseconds: 700));
+    overlays.add(levelCompleteOverlayIdentifier);
+  }
+
+  Future<void> onLevelFail() async {
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (kDebugMode) {
+      print('Level failed!');
+    }
+    overlays.add(gameOverOverlayIdentifier);
+  }
+
+  Future<void> nextLevel() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Increment the current level index to load the next level
+    // Make sure to handle the scenario where this is the last level
+    gameState.currentLevelIndex++;
+    if (gameState.currentLevelIndex >= levels.length) {
+      // Handle the case when all levels are complete
+      // Maybe go back to the first level or show a completion screen
+      gameState.currentLevelIndex =
+          0; // Looping back to first level for example
+    }
+
+    removeLastLevelImages();
+    // Call loadLevel to load the next level
+    await loadLevel();
+  }
+
+  Future<void> resetLevel() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    removeLastLevelImages();
+    // Call loadLevel to load the next level
+    await loadLevel();
   }
 
   void updateHearts() {
@@ -352,6 +397,27 @@ class DifferencesGame extends FlameGame with TapDetector {
     removeAll(circleOverlaysBottom);
     removeAll(circleOverlaysTop);
     removeAll(stars);
+  }
+
+  void addHintTwinkle(Vector2 position, Vector2 size) {
+    final hintTwinkle = HintTwinkle(
+      hintSprite,
+      size,
+      position,
+    );
+
+    hintTwinkles.add(hintTwinkle);
+
+    add(hintTwinkle);
+    hintTwinkle.playEffects();
+  }
+
+  void removeAllHintTwinkles() {
+    for (var hintTwinkle in hintTwinkles) {
+      remove(hintTwinkle);
+    }
+
+    hintTwinkles.clear();
   }
 
   @override

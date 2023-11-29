@@ -65,6 +65,8 @@ flutter:
     - assets/images/vignette_overlay.png
     - assets/images/wrong_tap.png
     - assets/images/star.png
+    - assets/images/hint.png
+    - assets/images/hint_button.png
     - assets/audio/ding.mp3
     - assets/audio/drum_failure.mp3
     - assets/audio/level_complete.mp3
