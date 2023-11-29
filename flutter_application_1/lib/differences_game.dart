@@ -6,11 +6,11 @@ import 'package:flame/input.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/background_layer.dart';
 import 'package:flutter_application_1/firework.dart';
 import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/levels_data.dart';
 import 'package:flutter_application_1/star.dart';
-import 'package:flutter_application_1/vignette_overlay.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
@@ -22,7 +22,7 @@ class DifferencesGame extends FlameGame with TapDetector {
   late SpriteComponent topImage;
   late SpriteComponent bottomImage;
 
-  late VignetteOverlay vignetteOverlay;
+  late BackgroundLayer vignetteOverlay;
 
   //difference areas
   List<Rect> differenceAreas = [];
@@ -38,13 +38,7 @@ class DifferencesGame extends FlameGame with TapDetector {
   @override
   Future<void> onLoad() async {
     final vignette = await Sprite.load(vignetteImagePath);
-    vignetteOverlay = VignetteOverlay(
-      vignette,
-      Vector2.zero(),
-      size,
-    );
-
-    add(vignetteOverlay);
+    vignetteOverlay = BackgroundLayer(vignette, size);
 
     await FlameAudio.audioCache.loadAll([
       correctTapSound,
@@ -371,6 +365,7 @@ class DifferencesGame extends FlameGame with TapDetector {
       Paint()..color = backgroundColor,
     );
 
+    vignetteOverlay.render(canvas);
     // Don't forget to call super.render()
     super.render(canvas);
   }
