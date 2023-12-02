@@ -230,8 +230,8 @@ class DifferencesGame extends FlameGame with TapDetector {
     bool foundDifference = false;
     bool hasBeenFoundBefore = false;
 
-    /*bool isTopImage = topImage.toRect().contains(tapPos.toOffset());
-    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());*/
+    bool isTopImage = topImage.toRect().contains(tapPos.toOffset());
+    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());
 
     for (int i = 0; i < circleOverlaysTop.length; i++) {
       if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
@@ -252,14 +252,15 @@ class DifferencesGame extends FlameGame with TapDetector {
       }
     }
 
-    /*if (isTopImage || isBottomImage) {
+    Vector2 normalizedPos = Vector2.zero();
+    if (isTopImage || isBottomImage) {
       Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
-      Vector2 normalizedPos = Vector2(
+      normalizedPos = Vector2(
         (tapPos.x - imageRect.left) / imageRect.width,
         (tapPos.y - imageRect.top) / imageRect.height,
       );
       print("Normalized Tap Position: $normalizedPos");
-    }*/
+    }
 
     if (foundDifference) {
       onDifferenceSpotted(tapPos, hasBeenFoundBefore);
@@ -334,18 +335,12 @@ class DifferencesGame extends FlameGame with TapDetector {
   Future<void> nextLevel() async {
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Increment the current level index to load the next level
-    // Make sure to handle the scenario where this is the last level
     gameState.currentLevelIndex++;
     if (gameState.currentLevelIndex >= levels.length) {
-      // Handle the case when all levels are complete
-      // Maybe go back to the first level or show a completion screen
-      gameState.currentLevelIndex =
-          0; // Looping back to first level for example
+      gameState.currentLevelIndex = 0; // Looping back to first level
     }
 
     removeLastLevelImages();
-    // Call loadLevel to load the next level
     await loadLevel();
   }
 
@@ -353,7 +348,6 @@ class DifferencesGame extends FlameGame with TapDetector {
     await Future.delayed(const Duration(milliseconds: 500));
 
     removeLastLevelImages();
-    // Call loadLevel to load the next level
     await loadLevel();
   }
 

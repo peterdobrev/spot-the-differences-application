@@ -60,6 +60,18 @@ flutter:
     - assets/images/vintage_car_in_woods_2.png
     - assets/images/animal_park_1.png
     - assets/images/animal_park_2.png
+    - assets/images/dancing_1.png
+    - assets/images/dancing_2.png
+    - assets/images/football_1.png
+    - assets/images/football_2.png
+    - assets/images/capybara_1.png
+    - assets/images/capybara_2.png
+    - assets/images/wild_1.png
+    - assets/images/wild_2.png
+    - assets/images/sportcars_1.png
+    - assets/images/sportcars_2.png
+    - assets/images/tools_1.png
+    - assets/images/tools_2.png
     - assets/images/circle.png
     - assets/images/heart.png
     - assets/images/vignette_overlay.png

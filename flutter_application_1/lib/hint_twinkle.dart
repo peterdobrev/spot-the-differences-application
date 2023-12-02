@@ -1,10 +1,7 @@
-import 'dart:math';
-
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter_application_1/constants.dart';
-import 'package:flutter_application_1/utils.dart';
 
 class HintTwinkle extends SpriteComponent {
   HintTwinkle(Sprite sprite, Vector2 size, Vector2 position)
