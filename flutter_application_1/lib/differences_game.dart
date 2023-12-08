@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -18,8 +19,17 @@ import 'constants.dart';
 import 'overlay_circle.dart';
 import 'game_state.dart';
 
-class DifferencesGame extends FlameGame with TapDetector {
+class DifferencesGame extends FlameGame
+    with MultiTouchTapDetector, ScaleDetector {
   GameState gameState = GameState();
+
+  bool isZooming = false;
+  late Vector2 zoomPosition;
+  late double imageZoom;
+  late Vector2 originalSrcSize;
+  late Vector2 originalSrcPosition;
+  DateTime _lastScaleTime = DateTime.now();
+
   //images
   late SpriteComponent topImage;
   late SpriteComponent bottomImage;
@@ -71,8 +81,129 @@ class DifferencesGame extends FlameGame with TapDetector {
     await loadLevel();
   }
 
+  @override
+  void onScaleStart(ScaleStartInfo info) {
+    final currentTime = DateTime.now();
+    if (currentTime.difference(_lastScaleTime).inMilliseconds < 20 ||
+        gameState.remainingDifferences <= 0) {
+      // If less than 20 milliseconds has passed, ignore this cycle or if the game is over
+      return;
+    }
+    _lastScaleTime = currentTime; // Update the last scale time
+
+    isZooming = true;
+    zoomPosition = info.raw.focalPoint.toVector2();
+
+    if (!isTapOnAnyImage(zoomPosition)) {
+      isZooming = false;
+      return;
+    }
+
+    hideAllImageOverlays();
+  }
+
+  @override
+  void onScaleUpdate(ScaleUpdateInfo info) {
+    if (DateTime.now().difference(_lastScaleTime).inMilliseconds < 20 ||
+        gameState.remainingDifferences <= 0) {
+      // If less than 20 milliseconds has passed, ignore this cycle
+      return;
+    }
+
+    if (isZooming = false) {
+      return;
+    }
+
+    imageZoom = max(1, min(3, info.scale.global.y));
+    Vector2 normalizedZoomPos = getNormalizedImagePos(zoomPosition);
+    // Calculate the new source rectangle
+    Rect calculateSrcRect(SpriteComponent image) {
+      final originalSize = originalSrcSize;
+      final zoomedSize = originalSize / imageZoom; // New zoomed size
+
+      // Calculate the top left corner of the new src rect
+      Vector2 topLeft = Vector2(
+        normalizedZoomPos.x * originalSize.x - zoomedSize.x / 2,
+        normalizedZoomPos.y * originalSize.y - zoomedSize.y / 2,
+      );
+
+      // Adjust topLeft to ensure it doesn't go outside the image bounds
+      topLeft = Vector2(
+        max(0, min(topLeft.x, originalSize.x - zoomedSize.x)),
+        max(0, min(topLeft.y, originalSize.y - zoomedSize.y)),
+      );
+
+      // Create the new src rect
+      final srcRect = Rect.fromLTWH(
+        topLeft.x,
+        topLeft.y,
+        zoomedSize.x,
+        zoomedSize.y,
+      );
+
+      return srcRect;
+    }
+
+    // Apply the new src rect to both images
+    topImage.sprite?.src = calculateSrcRect(topImage);
+    bottomImage.sprite?.src = calculateSrcRect(bottomImage);
+  }
+
+  @override
+  void onScaleEnd(ScaleEndInfo info) {
+    if (DateTime.now().difference(_lastScaleTime).inMilliseconds < 20 ||
+        gameState.remainingDifferences <= 0) {
+      // If less than 20 milliseconds has passed, ignore this cycle
+      return;
+    }
+    _lastScaleTime = DateTime.now(); // Update the last scale time
+
+    resetZoom();
+    showAllImageOverlays();
+  }
+
+  Future<void> resetZoom() async {
+    isZooming = false;
+    imageZoom = 1;
+
+    const duration = Duration(milliseconds: 300); // Duration of the animation
+    final startTime = DateTime.now();
+
+    while (DateTime.now().difference(startTime) < duration) {
+      final elapsed = DateTime.now().difference(startTime);
+      final factor = elapsed.inMilliseconds / duration.inMilliseconds;
+
+      // Interpolating srcSize and srcPosition
+      topImage.sprite?.srcSize = lerpVector2(
+          topImage.sprite?.srcSize ?? Vector2.zero(), originalSrcSize, factor);
+      topImage.sprite?.srcPosition = lerpVector2(
+          topImage.sprite?.srcPosition ?? Vector2.zero(),
+          originalSrcPosition,
+          factor);
+
+      bottomImage.sprite?.srcSize = lerpVector2(
+          bottomImage.sprite?.srcSize ?? Vector2.zero(),
+          originalSrcSize,
+          factor);
+      bottomImage.sprite?.srcPosition = lerpVector2(
+          bottomImage.sprite?.srcPosition ?? Vector2.zero(),
+          originalSrcPosition,
+          factor);
+
+      // Await a small delay to create a frame-by-frame animation effect
+      await Future.delayed(
+          const Duration(milliseconds: 16)); // Approximately 60 FPS
+    }
+
+    // Ensure the final state is set
+    topImage.sprite?.srcSize = originalSrcSize;
+    topImage.sprite?.srcPosition = originalSrcPosition;
+
+    bottomImage.sprite?.srcSize = originalSrcSize;
+    bottomImage.sprite?.srcPosition = originalSrcPosition;
+  }
+
   void addHintButton(Sprite hintButtonSprite) {
-    // Add a button on the bottom of the screen
     hintButton = SpriteButtonComponent(
         button: hintButtonSprite,
         buttonDown: circleSprite,
@@ -115,6 +246,9 @@ class DifferencesGame extends FlameGame with TapDetector {
               size.x * spaceBetweenImages), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
     );
+
+    originalSrcPosition = Vector2.zero();
+    originalSrcSize = topImage.sprite?.srcSize ?? Vector2.zero();
 
     add(topImage);
     add(bottomImage);
@@ -208,7 +342,10 @@ class DifferencesGame extends FlameGame with TapDetector {
   }
 
   @override
-  bool onTapDown(TapDownInfo info) {
+  void onTapUp(int pointerId, TapUpInfo info) {
+    if (isZooming) {
+      return;
+    }
     final tapPos = info.eventPosition.widget;
 
     if (gameState.lives > 0 && gameState.remainingDifferences > 0) {
@@ -219,7 +356,7 @@ class DifferencesGame extends FlameGame with TapDetector {
       }
     }
 
-    return true;
+    return;
   }
 
   bool isTapOnAnyImage(Vector2 tapPos) {
@@ -229,9 +366,9 @@ class DifferencesGame extends FlameGame with TapDetector {
   void handleImageTap(Vector2 tapPos) {
     bool foundDifference = false;
     bool hasBeenFoundBefore = false;
-
+/*
     bool isTopImage = topImage.toRect().contains(tapPos.toOffset());
-    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());
+    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());*/
 
     for (int i = 0; i < circleOverlaysTop.length; i++) {
       if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
@@ -252,7 +389,7 @@ class DifferencesGame extends FlameGame with TapDetector {
       }
     }
 
-    Vector2 normalizedPos = Vector2.zero();
+    /*Vector2 normalizedPos = Vector2.zero();
     if (isTopImage || isBottomImage) {
       Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
       normalizedPos = Vector2(
@@ -260,13 +397,28 @@ class DifferencesGame extends FlameGame with TapDetector {
         (tapPos.y - imageRect.top) / imageRect.height,
       );
       print("Normalized Tap Position: $normalizedPos");
-    }
+    }*/
 
     if (foundDifference) {
       onDifferenceSpotted(tapPos, hasBeenFoundBefore);
     } else {
       onWrongTap(tapPos);
     }
+  }
+
+  Vector2 getNormalizedImagePos(Vector2 pos) {
+    bool isTopImage = topImage.toRect().contains(pos.toOffset());
+    bool isBottomImage = bottomImage.toRect().contains(pos.toOffset());
+
+    Vector2 normalizedPos = Vector2.zero();
+    if (isTopImage || isBottomImage) {
+      Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
+      normalizedPos = Vector2(
+        (pos.x - imageRect.left) / imageRect.width,
+        (pos.y - imageRect.top) / imageRect.height,
+      );
+    }
+    return normalizedPos;
   }
 
   void displayHint() {
@@ -412,6 +564,50 @@ class DifferencesGame extends FlameGame with TapDetector {
     }
 
     hintTwinkles.clear();
+  }
+
+  void hideAllHintTwinkles() {
+    animateOpacity(hintTwinkles, 0, const Duration(milliseconds: 50));
+  }
+
+  void hideAllCircleOverlays() {
+    animateOpacity(
+        circleOverlaysTop.where((element) => element.hasBeenClicked).toList(),
+        0,
+        const Duration(milliseconds: 50));
+    animateOpacity(
+        circleOverlaysBottom
+            .where((element) => element.hasBeenClicked)
+            .toList(),
+        0,
+        const Duration(milliseconds: 50));
+  }
+
+  void hideAllImageOverlays() {
+    hideAllCircleOverlays();
+    hideAllHintTwinkles();
+  }
+
+  void showAllCircleOverlays() {
+    animateOpacity(
+        circleOverlaysTop.where((element) => element.hasBeenClicked).toList(),
+        1,
+        const Duration(milliseconds: 50));
+    animateOpacity(
+        circleOverlaysBottom
+            .where((element) => element.hasBeenClicked)
+            .toList(),
+        1,
+        const Duration(milliseconds: 50));
+  }
+
+  void showAllHintTwinkles() {
+    animateOpacity(hintTwinkles, 1, const Duration(milliseconds: 50));
+  }
+
+  void showAllImageOverlays() {
+    showAllCircleOverlays();
+    showAllHintTwinkles();
   }
 
   @override
