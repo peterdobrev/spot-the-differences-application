@@ -20,13 +20,15 @@ class Heart extends SpriteComponent {
     SequenceEffect colorEffect = SequenceEffect([
       ColorEffect(
         const Color.fromARGB(255, 129, 0, 0),
-        const Offset(0.0, 1),
         EffectController(duration: 0.1),
+        opacityFrom: 0.5,
+        opacityTo: 0,
       ),
       ColorEffect(
         const Color.fromARGB(255, 114, 114, 114),
-        const Offset(0.0, 1),
         EffectController(duration: 0.1),
+        opacityFrom: 0,
+        opacityTo: 1,
       )
     ]);
 
