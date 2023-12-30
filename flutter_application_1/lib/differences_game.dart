@@ -25,14 +25,15 @@ class DifferencesGame extends FlameGame
 
   bool isZooming = false;
   late Vector2 zoomPosition;
-  late double imageZoom;
   late Vector2 originalSrcSize;
   late Vector2 originalSrcPosition;
   DateTime _lastScaleTime = DateTime.now();
-
   //images
-  late SpriteComponent topImage;
-  late SpriteComponent bottomImage;
+  late PositionComponent topImage;
+  late PositionComponent bottomImage;
+
+  late PositionComponent topImageContainer;
+  late PositionComponent bottomImageContainer;
 
   late BackgroundLayer vignetteOverlay;
 
@@ -98,8 +99,6 @@ class DifferencesGame extends FlameGame
       isZooming = false;
       return;
     }
-
-    hideAllImageOverlays();
   }
 
   @override
@@ -116,37 +115,17 @@ class DifferencesGame extends FlameGame
 
     imageZoom = max(1, min(3, info.scale.global.y));
     Vector2 normalizedZoomPos = getNormalizedImagePos(zoomPosition);
-    // Calculate the new source rectangle
-    Rect calculateSrcRect(SpriteComponent image) {
-      final originalSize = originalSrcSize;
-      final zoomedSize = originalSize / imageZoom; // New zoomed size
-
-      // Calculate the top left corner of the new src rect
       Vector2 topLeft = Vector2(
-        normalizedZoomPos.x * originalSize.x - zoomedSize.x / 2,
-        normalizedZoomPos.y * originalSize.y - zoomedSize.y / 2,
       );
 
-      // Adjust topLeft to ensure it doesn't go outside the image bounds
-      topLeft = Vector2(
-        max(0, min(topLeft.x, originalSize.x - zoomedSize.x)),
-        max(0, min(topLeft.y, originalSize.y - zoomedSize.y)),
-      );
-
-      // Create the new src rect
       final srcRect = Rect.fromLTWH(
         topLeft.x,
         topLeft.y,
         zoomedSize.x,
         zoomedSize.y,
-      );
-
       return srcRect;
-    }
-
-    // Apply the new src rect to both images
-    topImage.sprite?.src = calculateSrcRect(topImage);
-    bottomImage.sprite?.src = calculateSrcRect(bottomImage);
+    topImage.scale = Vector2(imageZoom, imageZoom);
+    bottomImage.scale = Vector2(imageZoom, imageZoom);
   }
 
   @override
@@ -158,50 +137,14 @@ class DifferencesGame extends FlameGame
     }
     _lastScaleTime = DateTime.now(); // Update the last scale time
 
-    resetZoom();
-    showAllImageOverlays();
-  }
+    resetZoom();  }
 
   Future<void> resetZoom() async {
     isZooming = false;
-    imageZoom = 1;
-
-    const duration = Duration(milliseconds: 300); // Duration of the animation
-    final startTime = DateTime.now();
-
-    while (DateTime.now().difference(startTime) < duration) {
-      final elapsed = DateTime.now().difference(startTime);
-      final factor = elapsed.inMilliseconds / duration.inMilliseconds;
-
-      // Interpolating srcSize and srcPosition
-      topImage.sprite?.srcSize = lerpVector2(
-          topImage.sprite?.srcSize ?? Vector2.zero(), originalSrcSize, factor);
-      topImage.sprite?.srcPosition = lerpVector2(
-          topImage.sprite?.srcPosition ?? Vector2.zero(),
-          originalSrcPosition,
-          factor);
-
-      bottomImage.sprite?.srcSize = lerpVector2(
-          bottomImage.sprite?.srcSize ?? Vector2.zero(),
-          originalSrcSize,
-          factor);
-      bottomImage.sprite?.srcPosition = lerpVector2(
-          bottomImage.sprite?.srcPosition ?? Vector2.zero(),
-          originalSrcPosition,
-          factor);
-
-      // Await a small delay to create a frame-by-frame animation effect
-      await Future.delayed(
-          const Duration(milliseconds: 16)); // Approximately 60 FPS
-    }
-
-    // Ensure the final state is set
-    topImage.sprite?.srcSize = originalSrcSize;
-    topImage.sprite?.srcPosition = originalSrcPosition;
-
-    bottomImage.sprite?.srcSize = originalSrcSize;
-    bottomImage.sprite?.srcPosition = originalSrcPosition;
+    
+    print(circleOverlaysTop.first.position);
   }
+
 
   void addHintButton(Sprite hintButtonSprite) {
     hintButton = SpriteButtonComponent(
@@ -231,27 +174,22 @@ class DifferencesGame extends FlameGame
 
     final double startingY = (screenHeight - totalHeight) / 2;
 
-    topImage = SpriteComponent(
-      sprite: spriteTop,
+
+    topImageContainer = ClipComponent.rectangle(
       position: Vector2(0, startingY), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
+      children: [topImage = PositionComponent(children: [SpriteComponent(sprite: spriteTop, size: Vector2(imageWidth, imageHeight))])],
     );
-
-    bottomImage = SpriteComponent(
-      sprite: spriteBottom,
-      position: Vector2(
-          0,
-          startingY +
-              imageHeight +
-              size.x * spaceBetweenImages), // Adjusted position
+    
+    bottomImageContainer = ClipComponent.rectangle(
+      position: Vector2(0, startingY + imageHeight + size.x * spaceBetweenImages), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
+      children: [bottomImage = PositionComponent(children: [SpriteComponent(sprite: spriteBottom, size: Vector2(imageWidth, imageHeight))])],
     );
 
-    originalSrcPosition = Vector2.zero();
-    originalSrcSize = topImage.sprite?.srcSize ?? Vector2.zero();
 
-    add(topImage);
-    add(bottomImage);
+    add(topImageContainer);
+    add(bottomImageContainer);
 
     initDifferenceAreas(size.x, imageHeight);
     addCircleOverlays(circleSprite, imageHeight, startingY);
@@ -293,24 +231,22 @@ class DifferencesGame extends FlameGame
     for (var area in differenceAreas) {
       final circleTop = OverlayCircle(
         circleSprite,
-        Vector2(area.left, area.top + startingY),
-        Vector2(max(area.width, area.height), max(area.width, area.height)),
-      );
+        Vector2(area.left, area.top),
+        Vector2(max(area.width, area.height), max(area.width, area.height)));
 
       final circleBottom = OverlayCircle(
-          circleSprite,
-          Vector2(area.left,
-              area.top + imageHeight + startingY + size.x * spaceBetweenImages),
-          Vector2(max(area.width, area.height), max(area.width, area.height)));
+        circleSprite,
+        Vector2(area.left, area.top),
+        Vector2(max(area.width, area.height), max(area.width, area.height)));
 
-      circleTop.opacity = 0;
-      circleBottom.opacity = 0;
+      circleTop.opacity = 1;
+      circleBottom.opacity = 1;
 
       circleOverlaysTop.add(circleTop);
       circleOverlaysBottom.add(circleBottom);
 
-      add(circleTop);
-      add(circleBottom);
+      topImage.add(circleTop);
+      bottomImage.add(circleBottom);
     }
   }
 
@@ -343,9 +279,7 @@ class DifferencesGame extends FlameGame
 
   @override
   void onTapUp(int pointerId, TapUpInfo info) {
-    if (isZooming) {
-      return;
-    }
+
     final tapPos = info.eventPosition.widget;
 
     if (gameState.lives > 0 && gameState.remainingDifferences > 0) {
@@ -355,24 +289,31 @@ class DifferencesGame extends FlameGame
         displayHint();
       }
     }
-
-    return;
   }
 
   bool isTapOnAnyImage(Vector2 tapPos) {
-    return isTapOnImage(tapPos, topImage) || isTapOnImage(tapPos, bottomImage);
+    return isTapOnImage(tapPos, topImageContainer) || isTapOnImage(tapPos, bottomImageContainer);
   }
 
   void handleImageTap(Vector2 tapPos) {
     bool foundDifference = false;
     bool hasBeenFoundBefore = false;
-/*
-    bool isTopImage = topImage.toRect().contains(tapPos.toOffset());
-    bool isBottomImage = bottomImage.toRect().contains(tapPos.toOffset());*/
+
+    bool isTopImage = topImageContainer.toRect().contains(tapPos.toOffset());
+    bool isBottomImage = bottomImageContainer.toRect().contains(tapPos.toOffset());
+
+    Vector2 imageTapPos = Vector2.zero();
+    if (isTopImage || isBottomImage) {
+      Rect imageRect = isTopImage ? topImageContainer.toRect() : bottomImageContainer.toRect();
+      imageTapPos = Vector2(
+        (tapPos.x - imageRect.left) / imageZoom,
+        (tapPos.y - imageRect.top) / imageZoom,
+      );
+    }
 
     for (int i = 0; i < circleOverlaysTop.length; i++) {
-      if (circleOverlaysTop[i].toRect().contains(tapPos.toOffset()) ||
-          circleOverlaysBottom[i].toRect().contains(tapPos.toOffset())) {
+      if (circleOverlaysTop[i].toRect().contains(imageTapPos.toOffset()) ||
+          circleOverlaysBottom[i].toRect().contains(imageTapPos.toOffset())) {
         circleOverlaysTop[i].opacity = 1.0;
         circleOverlaysBottom[i].opacity = 1.0;
 
@@ -389,16 +330,6 @@ class DifferencesGame extends FlameGame
       }
     }
 
-    /*Vector2 normalizedPos = Vector2.zero();
-    if (isTopImage || isBottomImage) {
-      Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
-      normalizedPos = Vector2(
-        (tapPos.x - imageRect.left) / imageRect.width,
-        (tapPos.y - imageRect.top) / imageRect.height,
-      );
-      print("Normalized Tap Position: $normalizedPos");
-    }*/
-
     if (foundDifference) {
       onDifferenceSpotted(tapPos, hasBeenFoundBefore);
     } else {
@@ -407,8 +338,8 @@ class DifferencesGame extends FlameGame
   }
 
   Vector2 getNormalizedImagePos(Vector2 pos) {
-    bool isTopImage = topImage.toRect().contains(pos.toOffset());
-    bool isBottomImage = bottomImage.toRect().contains(pos.toOffset());
+    bool isTopImage = topImageContainer.toRect().contains(pos.toOffset());
+    bool isBottomImage = bottomImageContainer.toRect().contains(pos.toOffset());
 
     Vector2 normalizedPos = Vector2.zero();
     if (isTopImage || isBottomImage) {
@@ -538,10 +469,8 @@ class DifferencesGame extends FlameGame
   }
 
   void removeLastLevelImages() {
-    remove(topImage);
-    remove(bottomImage);
-    removeAll(circleOverlaysBottom);
-    removeAll(circleOverlaysTop);
+    remove(topImageContainer);
+    remove(bottomImageContainer);
     removeAll(stars);
   }
 

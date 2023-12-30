@@ -17,8 +17,6 @@ class Star extends SpriteComponent {
       ColorEffect(
         const Color.fromARGB(255, 114, 114, 114),
         EffectController(duration: 0.1),
-        opacityFrom: 0.4,
-        opacityTo: 0.9,
       ),
     );
     return super.onLoad();

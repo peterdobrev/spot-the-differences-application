@@ -37,7 +37,7 @@ T randomElement<T>(List<T> list) {
   return list[random.nextInt(list.length)];
 }
 
-bool isTapOnImage(Vector2 tapPos, SpriteComponent image) {
+bool isTapOnImage(Vector2 tapPos, PositionComponent image) {
   return image.toRect().contains(tapPos.toOffset());
 }
 
