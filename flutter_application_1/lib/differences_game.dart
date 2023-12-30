@@ -23,7 +23,10 @@ class DifferencesGame extends FlameGame
     with MultiTouchTapDetector, ScaleDetector {
   GameState gameState = GameState();
 
+  late double startingY;
+
   bool isZooming = false;
+  double imageZoom = 1.0;
   late Vector2 zoomPosition;
   late Vector2 originalSrcSize;
   late Vector2 originalSrcPosition;
@@ -84,6 +87,7 @@ class DifferencesGame extends FlameGame
 
   @override
   void onScaleStart(ScaleStartInfo info) {
+    if(info.pointerCount > 1){
     final currentTime = DateTime.now();
     if (currentTime.difference(_lastScaleTime).inMilliseconds < 20 ||
         gameState.remainingDifferences <= 0) {
@@ -93,40 +97,72 @@ class DifferencesGame extends FlameGame
     _lastScaleTime = currentTime; // Update the last scale time
 
     isZooming = true;
+
     zoomPosition = info.raw.focalPoint.toVector2();
 
-    if (!isTapOnAnyImage(zoomPosition)) {
+    if (isTapOnImage(zoomPosition, bottomImageContainer)) {
+      // Adjust the zoom position to be relative to the top image
+      zoomPosition.y -= topImageContainer.position.y +
+          size.x * spaceBetweenImages +
+          startingY;
+    } else if (!isTapOnImage(zoomPosition,
+        topImageContainer)) // If the tap is not on any image, ignore this cycle
+    {
       isZooming = false;
       return;
+    }
+    }
+    else if(info.pointerCount == 1){
+      isZooming = false;
     }
   }
 
   @override
-  void onScaleUpdate(ScaleUpdateInfo info) {
+void onScaleUpdate(ScaleUpdateInfo info) {
     if (DateTime.now().difference(_lastScaleTime).inMilliseconds < 20 ||
         gameState.remainingDifferences <= 0) {
-      // If less than 20 milliseconds has passed, ignore this cycle
-      return;
+        // If less than 20 milliseconds has passed, ignore this cycle
+        return;
     }
 
-    if (isZooming = false) {
-      return;
+    // For Dragging (Moving the Zoomed Position)
+    if (info.pointerCount == 1 && imageZoom > 1.0) {
+        print('dragging');
+        Vector2 dragDelta = info.raw.focalPoint.toVector2() - zoomPosition;
+        zoomPosition += dragDelta;
+
+        // Adjust newPosition based on the drag
+        Vector2 newPosition = calculateNewPosition(topImage.position, zoomPosition,
+            imageZoom, imageZoom, topImage.size, topImageContainer.size);
+
+        topImage.position = newPosition;
+        bottomImage.position = newPosition;
+    }
+    // For Pinch-to-Zoom
+    else if (info.pointerCount > 1) {
+        if (isZooming = false) {
+            return;
+        }
+
+        double newZoom = max(1, min(3, info.scale.global.y));
+
+        Vector2 newPosition = calculateNewPosition(topImage.position, zoomPosition,
+            imageZoom, newZoom, topImage.size, topImageContainer.size);
+
+        Vector2 imageScale = Vector2(newZoom, newZoom);
+        topImage.scale = imageScale;
+        bottomImage.scale = imageScale;
+
+        topImage.position = newPosition;
+        bottomImage.position = newPosition;
+
+        imageZoom = newZoom;
     }
 
-    imageZoom = max(1, min(3, info.scale.global.y));
-    Vector2 normalizedZoomPos = getNormalizedImagePos(zoomPosition);
-      Vector2 topLeft = Vector2(
-      );
-
-      final srcRect = Rect.fromLTWH(
-        topLeft.x,
-        topLeft.y,
-        zoomedSize.x,
-        zoomedSize.y,
-      return srcRect;
-    topImage.scale = Vector2(imageZoom, imageZoom);
-    bottomImage.scale = Vector2(imageZoom, imageZoom);
-  }
+    // Update the last zoom position
+    _lastScaleTime = DateTime.now();
+    zoomPosition = info.raw.focalPoint.toVector2();
+}
 
   @override
   void onScaleEnd(ScaleEndInfo info) {
@@ -137,14 +173,16 @@ class DifferencesGame extends FlameGame
     }
     _lastScaleTime = DateTime.now(); // Update the last scale time
 
-    resetZoom();  }
+    //resetZoom();
+  }
 
   Future<void> resetZoom() async {
     isZooming = false;
-    
-    print(circleOverlaysTop.first.position);
+    topImage.position = Vector2.zero();
+    bottomImage.position = Vector2.zero();
+    topImage.scale = Vector2.all(1);
+    bottomImage.scale = Vector2.all(1);
   }
-
 
   void addHintButton(Sprite hintButtonSprite) {
     hintButton = SpriteButtonComponent(
@@ -172,21 +210,37 @@ class DifferencesGame extends FlameGame
 
     final double totalHeight = (imageHeight * 2) + size.x * spaceBetweenImages;
 
-    final double startingY = (screenHeight - totalHeight) / 2;
-
+    startingY = (screenHeight - totalHeight) / 2;
 
     topImageContainer = ClipComponent.rectangle(
       position: Vector2(0, startingY), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
-      children: [topImage = PositionComponent(children: [SpriteComponent(sprite: spriteTop, size: Vector2(imageWidth, imageHeight))])],
-    );
-    
-    bottomImageContainer = ClipComponent.rectangle(
-      position: Vector2(0, startingY + imageHeight + size.x * spaceBetweenImages), // Adjusted position
-      size: Vector2(imageWidth, imageHeight),
-      children: [bottomImage = PositionComponent(children: [SpriteComponent(sprite: spriteBottom, size: Vector2(imageWidth, imageHeight))])],
+      children: [
+        topImage = PositionComponent(
+            size: Vector2(imageWidth, imageHeight),
+            children: [
+              SpriteComponent(
+                  sprite: spriteTop, size: Vector2(imageWidth, imageHeight))
+            ])
+      ],
     );
 
+    bottomImageContainer = ClipComponent.rectangle(
+      position: Vector2(
+          0,
+          startingY +
+              imageHeight +
+              size.x * spaceBetweenImages), // Adjusted position
+      size: Vector2(imageWidth  , imageHeight ),
+      children: [
+        bottomImage = PositionComponent(
+            size: Vector2(imageWidth, imageHeight),
+            children: [
+              SpriteComponent(
+                  sprite: spriteBottom, size: Vector2(imageWidth, imageHeight))
+            ])
+      ],
+    );
 
     add(topImageContainer);
     add(bottomImageContainer);
@@ -230,14 +284,14 @@ class DifferencesGame extends FlameGame
       Sprite circleSprite, double imageHeight, double startingY) {
     for (var area in differenceAreas) {
       final circleTop = OverlayCircle(
-        circleSprite,
-        Vector2(area.left, area.top),
-        Vector2(max(area.width, area.height), max(area.width, area.height)));
+          circleSprite,
+          Vector2(area.left, area.top),
+          Vector2(max(area.width, area.height), max(area.width, area.height)));
 
       final circleBottom = OverlayCircle(
-        circleSprite,
-        Vector2(area.left, area.top),
-        Vector2(max(area.width, area.height), max(area.width, area.height)));
+          circleSprite,
+          Vector2(area.left, area.top),
+          Vector2(max(area.width, area.height), max(area.width, area.height)));
 
       circleTop.opacity = 1;
       circleBottom.opacity = 1;
@@ -279,7 +333,6 @@ class DifferencesGame extends FlameGame
 
   @override
   void onTapUp(int pointerId, TapUpInfo info) {
-
     final tapPos = info.eventPosition.widget;
 
     if (gameState.lives > 0 && gameState.remainingDifferences > 0) {
@@ -292,7 +345,8 @@ class DifferencesGame extends FlameGame
   }
 
   bool isTapOnAnyImage(Vector2 tapPos) {
-    return isTapOnImage(tapPos, topImageContainer) || isTapOnImage(tapPos, bottomImageContainer);
+    return isTapOnImage(tapPos, topImageContainer) ||
+        isTapOnImage(tapPos, bottomImageContainer);
   }
 
   void handleImageTap(Vector2 tapPos) {
@@ -300,14 +354,18 @@ class DifferencesGame extends FlameGame
     bool hasBeenFoundBefore = false;
 
     bool isTopImage = topImageContainer.toRect().contains(tapPos.toOffset());
-    bool isBottomImage = bottomImageContainer.toRect().contains(tapPos.toOffset());
+    bool isBottomImage =
+        bottomImageContainer.toRect().contains(tapPos.toOffset());
 
     Vector2 imageTapPos = Vector2.zero();
     if (isTopImage || isBottomImage) {
-      Rect imageRect = isTopImage ? topImageContainer.toRect() : bottomImageContainer.toRect();
+      Rect imageRect = isTopImage
+          ? topImageContainer.toRect()
+          : bottomImageContainer.toRect();
       imageTapPos = Vector2(
-        (tapPos.x - imageRect.left) / imageZoom,
-        (tapPos.y - imageRect.top) / imageZoom,
+        (tapPos.x - imageRect.left - topImage.x) / imageZoom,
+        (tapPos.y - imageRect.top - topImage.y) /
+            imageZoom, // Adjusted position based on zoom
       );
     }
 

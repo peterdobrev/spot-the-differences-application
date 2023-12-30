@@ -76,3 +76,19 @@ void animateOpacity(
 
   step(0);
 }
+Vector2 calculateNewPosition(Vector2 currentPosition, Vector2 focalPoint, double oldZoom, double newZoom, Vector2 imageSize, Vector2 containerSize) {
+    // Your existing calculations
+    Vector2 relativeFocalPoint = focalPoint - currentPosition;
+    Vector2 movementDueToScaling = (relativeFocalPoint * newZoom / oldZoom) - relativeFocalPoint;
+    Vector2 newPosition = currentPosition - movementDueToScaling;
+
+    // Constraints
+    double maxX = max(0, (imageSize.x * newZoom) - containerSize.x);
+    double maxY = max(0, (imageSize.y * newZoom) - containerSize.y);
+
+    // Adjust position to ensure it doesn't exceed the bounds
+    newPosition.x = min(max(newPosition.x, -maxX), 0); // Ensure image doesn't move too far left
+    newPosition.y = min(max(newPosition.y, -maxY), 0); // Ensure image doesn't move too far up
+
+    return newPosition;
+}
