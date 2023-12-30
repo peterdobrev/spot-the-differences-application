@@ -31,6 +31,9 @@ class DifferencesGame extends FlameGame
   late Vector2 originalSrcSize;
   late Vector2 originalSrcPosition;
   DateTime _lastScaleTime = DateTime.now();
+
+  late Vector2 dragStart;
+
   //images
   late PositionComponent topImage;
   late PositionComponent bottomImage;
@@ -113,6 +116,7 @@ class DifferencesGame extends FlameGame
     }
     }
     else if(info.pointerCount == 1){
+      dragStart = info.raw.focalPoint.toVector2();
       isZooming = false;
     }
   }
@@ -127,12 +131,15 @@ void onScaleUpdate(ScaleUpdateInfo info) {
 
     // For Dragging (Moving the Zoomed Position)
     if (info.pointerCount == 1 && imageZoom > 1.0) {
-        print('dragging');
-        Vector2 dragDelta = info.raw.focalPoint.toVector2() - zoomPosition;
-        zoomPosition += dragDelta;
+        Vector2 currentTouchPoint = info.raw.focalPoint.toVector2();
+        Vector2 dragDelta = currentTouchPoint - dragStart;
+        dragStart = currentTouchPoint; // Update dragStart for the next cycle
+
+        // Apply dragDelta to the image position
+        Vector2 dragOffset = topImage.position + dragDelta;
 
         // Adjust newPosition based on the drag
-        Vector2 newPosition = calculateNewPosition(topImage.position, zoomPosition,
+        Vector2 newPosition = calculateNewPosition(dragOffset, zoomPosition,
             imageZoom, imageZoom, topImage.size, topImageContainer.size);
 
         topImage.position = newPosition;
@@ -161,7 +168,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
 
     // Update the last zoom position
     _lastScaleTime = DateTime.now();
-    zoomPosition = info.raw.focalPoint.toVector2();
+
 }
 
   @override
@@ -293,8 +300,8 @@ void onScaleUpdate(ScaleUpdateInfo info) {
           Vector2(area.left, area.top),
           Vector2(max(area.width, area.height), max(area.width, area.height)));
 
-      circleTop.opacity = 1;
-      circleBottom.opacity = 1;
+      circleTop.opacity = 0;
+      circleBottom.opacity = 0;
 
       circleOverlaysTop.add(circleTop);
       circleOverlaysBottom.add(circleBottom);
