@@ -421,10 +421,11 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     for (int i = 0; i < circleOverlaysTop.length; i++) {
       if (circleOverlaysTop[i].opacity == 0.0) {
         double hintSize = getRandomDouble(15, 20);
-        addHintTwinkle(circleOverlaysBottom[i].position + randomVector2(40),
-            Vector2(hintSize, hintSize));
         addHintTwinkle(circleOverlaysTop[i].position + randomVector2(40),
-            Vector2(hintSize, hintSize));
+            Vector2(hintSize, hintSize), topImage);
+        addHintTwinkle(circleOverlaysBottom[i].position + randomVector2(40),
+            Vector2(hintSize, hintSize), bottomImage);
+
         break;
       }
     }
@@ -468,6 +469,9 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     if (kDebugMode) {
       print('Level completed!');
     }
+    imageZoom = 1.0;
+
+
     await Future.delayed(const Duration(milliseconds: 700));
     overlays.add(levelCompleteOverlayIdentifier);
   }
@@ -477,6 +481,8 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     if (kDebugMode) {
       print('Level failed!');
     }
+
+    imageZoom = 1.0;
     overlays.add(gameOverOverlayIdentifier);
   }
 
@@ -488,6 +494,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
       gameState.currentLevelIndex = 0; // Looping back to first level
     }
 
+    imageZoom = 1.0;
     removeLastLevelImages();
     await loadLevel();
   }
@@ -495,6 +502,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
   Future<void> resetLevel() async {
     await Future.delayed(const Duration(milliseconds: 500));
 
+    resetZoom();
     removeLastLevelImages();
     await loadLevel();
   }
@@ -539,7 +547,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     removeAll(stars);
   }
 
-  void addHintTwinkle(Vector2 position, Vector2 size) {
+  void addHintTwinkle(Vector2 position, Vector2 size, PositionComponent parent) {
     final hintTwinkle = HintTwinkle(
       hintSprite,
       size,
@@ -548,60 +556,21 @@ void onScaleUpdate(ScaleUpdateInfo info) {
 
     hintTwinkles.add(hintTwinkle);
 
-    add(hintTwinkle);
+    parent.add(hintTwinkle);
     hintTwinkle.playEffects();
   }
 
   void removeAllHintTwinkles() {
     for (var hintTwinkle in hintTwinkles) {
-      remove(hintTwinkle);
+      if(topImage.contains(hintTwinkle)){
+        topImage.remove(hintTwinkle);
+      }
+      else if(bottomImage.contains(hintTwinkle)){
+        bottomImage.remove(hintTwinkle);
+      }
     }
 
     hintTwinkles.clear();
-  }
-
-  void hideAllHintTwinkles() {
-    animateOpacity(hintTwinkles, 0, const Duration(milliseconds: 50));
-  }
-
-  void hideAllCircleOverlays() {
-    animateOpacity(
-        circleOverlaysTop.where((element) => element.hasBeenClicked).toList(),
-        0,
-        const Duration(milliseconds: 50));
-    animateOpacity(
-        circleOverlaysBottom
-            .where((element) => element.hasBeenClicked)
-            .toList(),
-        0,
-        const Duration(milliseconds: 50));
-  }
-
-  void hideAllImageOverlays() {
-    hideAllCircleOverlays();
-    hideAllHintTwinkles();
-  }
-
-  void showAllCircleOverlays() {
-    animateOpacity(
-        circleOverlaysTop.where((element) => element.hasBeenClicked).toList(),
-        1,
-        const Duration(milliseconds: 50));
-    animateOpacity(
-        circleOverlaysBottom
-            .where((element) => element.hasBeenClicked)
-            .toList(),
-        1,
-        const Duration(milliseconds: 50));
-  }
-
-  void showAllHintTwinkles() {
-    animateOpacity(hintTwinkles, 1, const Duration(milliseconds: 50));
-  }
-
-  void showAllImageOverlays() {
-    showAllCircleOverlays();
-    showAllHintTwinkles();
   }
 
   @override
