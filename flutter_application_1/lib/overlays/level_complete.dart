@@ -20,7 +20,6 @@ class _LevelCompleteState extends State<LevelComplete>
 
   @override
   void initState() {
-    FlameAudio.play(levelCompleteSound);
     super.initState();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 350),
@@ -39,6 +38,7 @@ class _LevelCompleteState extends State<LevelComplete>
       ),
     ]).animate(_controller);
     _controller.forward();
+    FlameAudio.play(levelCompleteSound, volume: widget.game.volumeLevel);
   }
 
   @override

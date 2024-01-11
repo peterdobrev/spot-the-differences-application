@@ -13,7 +13,8 @@ import 'package:flutter_application_1/heart.dart';
 import 'package:flutter_application_1/hint_twinkle.dart';
 import 'package:flutter_application_1/levels_data.dart';
 import 'package:flutter_application_1/star.dart';
-import 'package:flutter_application_1/utils.dart';
+import 'package:flutter_application_1/tip_system_component.dart';
+import 'package:flutter_application_1/utils/utils.dart';
 import 'package:flutter_application_1/wrong_tap.dart';
 import 'constants.dart';
 import 'overlay_circle.dart';
@@ -23,8 +24,14 @@ class DifferencesGame extends FlameGame
     with MultiTouchTapDetector, ScaleDetector {
   GameState gameState = GameState();
 
+  // Settings
+  double volumeLevel = 0.5;
+  bool vibrationEnabled = true;
+
+  // Image positioning
   late double startingY;
 
+  // Zooming
   bool isZooming = false;
   double imageZoom = 1.0;
   late Vector2 zoomPosition;
@@ -34,7 +41,7 @@ class DifferencesGame extends FlameGame
 
   late Vector2 dragStart;
 
-  //images
+  // Images
   late PositionComponent topImage;
   late PositionComponent bottomImage;
 
@@ -49,19 +56,19 @@ class DifferencesGame extends FlameGame
   late Sprite hintSprite;
   late Sprite circleSprite;
 
-  late SpriteButtonComponent hintButton;
+  late TipSystemComponent hintButton;
+  late SpriteButtonComponent settingsButton;
 
-  //late ButtonComponent hintButton;
-
-  //difference areas
+  // Difference areas
   List<Rect> differenceAreas = [];
   List<OverlayCircle> circleOverlaysTop = []; // first image
   List<OverlayCircle> circleOverlaysBottom = []; //second image
   List<Star> stars = [];
 
-  // lives
+  // Lives
   List<Heart> hearts = [];
 
+  // Hints
   List<HintTwinkle> hintTwinkles = [];
 
   @override
@@ -75,14 +82,31 @@ class DifferencesGame extends FlameGame
     wrongSprite = await Sprite.load(wrongImagePath);
     hintSprite = await Sprite.load(hintImagePath);
 
+    final settingsSprite = await Sprite.load(settingsImagePath);
     final hintButtonSprite = await Sprite.load(hintButtonImagePath);
-    addHintButton(hintButtonSprite);
+
+    settingsButton = initButton(
+        settingsSprite,
+        Vector2(size.x * heartsRatioToScreenWidth,
+            size.x * heartsRatioToScreenWidth),
+        Vector2(size.x - size.x * ratioOffsetHeartsScreenWidth,
+            size.y * ratioOffsetHeartsScreenHeight));
+
+    hintButton = TipSystemComponent(
+        buttonSprite: hintButtonSprite,
+        position: Vector2(size.x / 2, size.y - 60),
+        size: Vector2(60, 60),
+        tipsCount: gameState.tipsCount);
+
+    add(settingsButton);
+    add(hintButton);
 
     await FlameAudio.audioCache.loadAll([
       correctTapSound,
       wrongTapSound,
       levelCompleteSound,
       gameOverSound,
+      hintSound
     ]);
 
     await loadLevel();
@@ -90,86 +114,89 @@ class DifferencesGame extends FlameGame
 
   @override
   void onScaleStart(ScaleStartInfo info) {
-    if(info.pointerCount > 1){
-    final currentTime = DateTime.now();
-    if (currentTime.difference(_lastScaleTime).inMilliseconds < 20 ||
-        gameState.remainingDifferences <= 0) {
-      // If less than 20 milliseconds has passed, ignore this cycle or if the game is over
-      return;
-    }
-    _lastScaleTime = currentTime; // Update the last scale time
+    if (info.pointerCount > 1) {
+      final currentTime = DateTime.now();
+      if (currentTime.difference(_lastScaleTime).inMilliseconds < 20 ||
+          gameState.remainingDifferences <= 0) {
+        // If less than 20 milliseconds has passed, ignore this cycle or if the game is over
+        return;
+      }
+      _lastScaleTime = currentTime; // Update the last scale time
 
-    isZooming = true;
+      isZooming = true;
 
-    zoomPosition = info.raw.focalPoint.toVector2();
+      zoomPosition = info.raw.focalPoint.toVector2();
 
-    if (isTapOnImage(zoomPosition, bottomImageContainer)) {
-      // Adjust the zoom position to be relative to the top image
-      zoomPosition.y -= topImageContainer.position.y +
-          size.x * spaceBetweenImages +
-          startingY;
-    } else if (!isTapOnImage(zoomPosition,
-        topImageContainer)) // If the tap is not on any image, ignore this cycle
-    {
-      isZooming = false;
-      return;
-    }
-    }
-    else if(info.pointerCount == 1){
+      if (isTapOnPositionalComponent(zoomPosition, bottomImageContainer)) {
+        // Adjust the zoom position to be relative to the top image
+        zoomPosition.y -= topImageContainer.position.y +
+            size.x * spaceBetweenImages +
+            startingY;
+      } else if (!isTapOnPositionalComponent(zoomPosition,
+          topImageContainer)) // If the tap is not on any image, ignore this cycle
+      {
+        isZooming = false;
+        return;
+      }
+    } else if (info.pointerCount == 1) {
       dragStart = info.raw.focalPoint.toVector2();
       isZooming = false;
     }
   }
 
   @override
-void onScaleUpdate(ScaleUpdateInfo info) {
+  void onScaleUpdate(ScaleUpdateInfo info) {
     if (DateTime.now().difference(_lastScaleTime).inMilliseconds < 20 ||
         gameState.remainingDifferences <= 0) {
-        // If less than 20 milliseconds has passed, ignore this cycle
-        return;
+      // If less than 20 milliseconds has passed, ignore this cycle
+      return;
     }
 
     // For Dragging (Moving the Zoomed Position)
     if (info.pointerCount == 1 && imageZoom > 1.0) {
-        Vector2 currentTouchPoint = info.raw.focalPoint.toVector2();
-        Vector2 dragDelta = currentTouchPoint - dragStart;
-        dragStart = currentTouchPoint; // Update dragStart for the next cycle
+      Vector2 currentTouchPoint = info.raw.focalPoint.toVector2();
+      Vector2 dragDelta = currentTouchPoint - dragStart;
+      dragStart = currentTouchPoint; // Update dragStart for the next cycle
 
-        // Apply dragDelta to the image position
-        Vector2 dragOffset = topImage.position + dragDelta;
+      // Apply dragDelta to the image position
+      Vector2 dragOffset = topImage.position + dragDelta;
 
-        // Adjust newPosition based on the drag
-        Vector2 newPosition = calculateNewPosition(dragOffset, zoomPosition,
-            imageZoom, imageZoom, topImage.size, topImageContainer.size);
+      // Adjust newPosition based on the drag
+      Vector2 newPosition = calculateNewPosition(dragOffset, zoomPosition,
+          imageZoom, imageZoom, topImage.size, topImageContainer.size);
 
-        topImage.position = newPosition;
-        bottomImage.position = newPosition;
+      topImage.position = newPosition;
+      bottomImage.position = newPosition;
     }
     // For Pinch-to-Zoom
     else if (info.pointerCount > 1) {
-        if (isZooming = false) {
-            return;
-        }
+      if (isZooming = false) {
+        return;
+      }
 
-        double newZoom = max(1, min(3, info.scale.global.y));
+      double newZoom = max(1, min(3, info.scale.global.y));
 
-        Vector2 newPosition = calculateNewPosition(topImage.position, zoomPosition,
-            imageZoom, newZoom, topImage.size, topImageContainer.size);
+      Vector2 newPosition = calculateNewPosition(
+          topImage.position,
+          zoomPosition,
+          imageZoom,
+          newZoom,
+          topImage.size,
+          topImageContainer.size);
 
-        Vector2 imageScale = Vector2(newZoom, newZoom);
-        topImage.scale = imageScale;
-        bottomImage.scale = imageScale;
+      Vector2 imageScale = Vector2(newZoom, newZoom);
+      topImage.scale = imageScale;
+      bottomImage.scale = imageScale;
 
-        topImage.position = newPosition;
-        bottomImage.position = newPosition;
+      topImage.position = newPosition;
+      bottomImage.position = newPosition;
 
-        imageZoom = newZoom;
+      imageZoom = newZoom;
     }
 
     // Update the last zoom position
     _lastScaleTime = DateTime.now();
-
-}
+  }
 
   @override
   void onScaleEnd(ScaleEndInfo info) {
@@ -189,17 +216,6 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     bottomImage.position = Vector2.zero();
     topImage.scale = Vector2.all(1);
     bottomImage.scale = Vector2.all(1);
-  }
-
-  void addHintButton(Sprite hintButtonSprite) {
-    hintButton = SpriteButtonComponent(
-        button: hintButtonSprite,
-        buttonDown: circleSprite,
-        size: Vector2(60, 60),
-        position: Vector2(size.x / 2, size.y - 60),
-        anchor: Anchor.center);
-
-    add(hintButton);
   }
 
   Future<void> loadLevel() async {
@@ -238,7 +254,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
           startingY +
               imageHeight +
               size.x * spaceBetweenImages), // Adjusted position
-      size: Vector2(imageWidth  , imageHeight ),
+      size: Vector2(imageWidth, imageHeight),
       children: [
         bottomImage = PositionComponent(
             size: Vector2(imageWidth, imageHeight),
@@ -279,7 +295,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
                         additionalPixelOffsetHearts) +
                 size.x * ratioOffsetHeartsScreenWidth,
             size.y *
-                ratioOffsetHeartsScreenHeight), //equation is the gap between each heart
+                ratioOffsetHeartsScreenHeight), // Equation is the gap between each heart
       );
 
       hearts.add(heart);
@@ -345,15 +361,22 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     if (gameState.lives > 0 && gameState.remainingDifferences > 0) {
       if (isTapOnAnyImage(tapPos)) {
         handleImageTap(tapPos);
-      } else if (isTapOnButton(tapPos, hintButton)) {
-        displayHint();
+      } else if (isTapOnPositionalComponent(tapPos, settingsButton)) {
+        overlays.add(settingsOverlayIdentifier);
+      } else if (isTapOnPositionalComponent(tapPos, hintButton)) {
+        if (hintButton.requestTip()) {
+          displayHint();
+        }
+      } else {
+        print("Tap: $tapPos");
+        print(hintButton.position);
       }
     }
   }
 
   bool isTapOnAnyImage(Vector2 tapPos) {
-    return isTapOnImage(tapPos, topImageContainer) ||
-        isTapOnImage(tapPos, bottomImageContainer);
+    return isTapOnPositionalComponent(tapPos, topImageContainer) ||
+        isTapOnPositionalComponent(tapPos, bottomImageContainer);
   }
 
   void handleImageTap(Vector2 tapPos) {
@@ -429,13 +452,15 @@ void onScaleUpdate(ScaleUpdateInfo info) {
         break;
       }
     }
+
+    FlameAudio.play(hintSound, volume: volumeLevel);
   }
 
   void onDifferenceSpotted(Vector2 tapPos, bool hasBeenFoundBefore) {
     if (gameState.remainingDifferences > 0 && !hasBeenFoundBefore) {
       gameState.remainingDifferences--;
       updateStars(tapPos);
-      FlameAudio.play(correctTapSound);
+      FlameAudio.play(correctTapSound, volume: volumeLevel);
     }
 
     if (gameState.remainingDifferences <= 0) {
@@ -462,7 +487,7 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     );
 
     add(wrongTap);
-    wrongTap.playEffects();
+    wrongTap.playEffects(vibrationEnabled, volumeLevel);
   }
 
   Future<void> onLevelCompleted() async {
@@ -470,7 +495,6 @@ void onScaleUpdate(ScaleUpdateInfo info) {
       print('Level completed!');
     }
     imageZoom = 1.0;
-
 
     await Future.delayed(const Duration(milliseconds: 700));
     overlays.add(levelCompleteOverlayIdentifier);
@@ -547,7 +571,8 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     removeAll(stars);
   }
 
-  void addHintTwinkle(Vector2 position, Vector2 size, PositionComponent parent) {
+  void addHintTwinkle(
+      Vector2 position, Vector2 size, PositionComponent parent) {
     final hintTwinkle = HintTwinkle(
       hintSprite,
       size,
@@ -557,15 +582,14 @@ void onScaleUpdate(ScaleUpdateInfo info) {
     hintTwinkles.add(hintTwinkle);
 
     parent.add(hintTwinkle);
-    hintTwinkle.playEffects();
+    hintTwinkle.playEffects(volumeLevel);
   }
 
   void removeAllHintTwinkles() {
     for (var hintTwinkle in hintTwinkles) {
-      if(topImage.contains(hintTwinkle)){
+      if (topImage.contains(hintTwinkle)) {
         topImage.remove(hintTwinkle);
-      }
-      else if(bottomImage.contains(hintTwinkle)){
+      } else if (bottomImage.contains(hintTwinkle)) {
         bottomImage.remove(hintTwinkle);
       }
     }

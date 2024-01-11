@@ -4,6 +4,7 @@ class GameState {
   int currentLevelIndex = 0;
   int lives = startingLives;
   int remainingDifferences = 0;
+  int tipsCount = 3;
 
   // Other game state variables
 

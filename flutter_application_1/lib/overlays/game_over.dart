@@ -40,7 +40,7 @@ class _GameOverState extends State<GameOver>
     ]).animate(_controller);
 
     _controller.forward();
-    FlameAudio.play(gameOverSound, volume: 0.6);
+    FlameAudio.play(gameOverSound, volume: 0.6 * widget.game.volumeLevel);
   }
 
   @override

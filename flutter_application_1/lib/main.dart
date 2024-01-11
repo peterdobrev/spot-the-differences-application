@@ -6,6 +6,7 @@ import 'package:flutter_application_1/differences_game.dart';
 import 'package:flutter_application_1/overlays/game_over.dart';
 import 'package:flutter_application_1/overlays/level_complete.dart';
 import 'package:flutter_application_1/overlays/main_menu.dart';
+import 'package:flutter_application_1/overlays/settings_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ void main() {
         mainMenuOverlayIdentifier: (_, game) => MainMenu(game: game),
         gameOverOverlayIdentifier: (_, game) => GameOver(game: game),
         levelCompleteOverlayIdentifier: (_, game) => LevelComplete(game: game),
+        settingsOverlayIdentifier: (_, game) => SettingsScreen(game: game),
       },
       initialActiveOverlays: const [mainMenuOverlayIdentifier],
     ),

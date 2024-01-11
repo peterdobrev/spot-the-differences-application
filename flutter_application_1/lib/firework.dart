@@ -4,7 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/constants.dart';
-import 'package:flutter_application_1/utils.dart';
+import 'package:flutter_application_1/utils/utils.dart';
 
 Particle fireworkParticle() {
   // A palette to paint over the "sky"
