@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vibration/vibration.dart';
 
 class TipSystemComponent extends SpriteComponent {
   late SpriteComponent buttonComponent;
@@ -47,6 +48,7 @@ class TipSystemComponent extends SpriteComponent {
       tipsCount--;
     }
     updateTipCount();
+    playHintVibration();
   }
 
   void watchAd() {
@@ -64,5 +66,9 @@ class TipSystemComponent extends SpriteComponent {
     } else {
       textComponent.text = '$tipsCount';
     }
+  }
+
+  void playHintVibration() {
+    Vibration.vibrate(duration: 100, amplitude: 128);
   }
 }

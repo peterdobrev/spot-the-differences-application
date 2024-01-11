@@ -43,7 +43,7 @@ class WrongTap extends SpriteComponent {
     add(opacityEffect);
   }
 
-  Future<void> playWrongTapVibration() async {
+  void playWrongTapVibration() {
     Vibration.vibrate(duration: 100, amplitude: 128);
   }
 

@@ -82,6 +82,7 @@ flutter:
     - assets/images/hint.png
     - assets/images/hint_button.png
     - assets/images/settings_icon.png
+    - assets/images/splash_screen_logo.png
     - assets/audio/ding.mp3
     - assets/audio/sparkle_notification.mp3
     - assets/audio/drum_failure.mp3
