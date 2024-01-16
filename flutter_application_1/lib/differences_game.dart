@@ -42,11 +42,19 @@ class DifferencesGame extends FlameGame
   late Vector2 dragStart;
 
   // Images
-  late PositionComponent topImage;
-  late PositionComponent bottomImage;
 
-  late PositionComponent topImageContainer;
-  late PositionComponent bottomImageContainer;
+  late SpriteComponent topImage; // This is the top image
+  late SpriteComponent bottomImage; // This is the bottom image
+
+  late PositionComponent
+      topImageContainer; // This is the container that holds the top image
+  late PositionComponent
+      bottomImageContainer; // This is the container that holds the bottom image
+
+  late PositionComponent
+      topPositionalContainer; // This is the container that holds the top image container and the top image overlay circles and allows to move everything together
+  late PositionComponent
+      bottomPositionalContainer; // This is the container that holds the bottom image container and the bottom image overlay circles and allows to move everything together
 
   late BackgroundLayer vignetteOverlay;
 
@@ -127,13 +135,13 @@ class DifferencesGame extends FlameGame
 
       zoomPosition = info.raw.focalPoint.toVector2();
 
-      if (isTapOnPositionalComponent(zoomPosition, bottomImageContainer)) {
+      if (isTapOnPositionalComponent(zoomPosition, bottomPositionalContainer)) {
         // Adjust the zoom position to be relative to the top image
-        zoomPosition.y -= topImageContainer.position.y +
+        zoomPosition.y -= topPositionalContainer.position.y +
             size.x * spaceBetweenImages +
             startingY;
       } else if (!isTapOnPositionalComponent(zoomPosition,
-          topImageContainer)) // If the tap is not on any image, ignore this cycle
+          topPositionalContainer)) // If the tap is not on any image, ignore this cycle
       {
         isZooming = false;
         return;
@@ -159,14 +167,19 @@ class DifferencesGame extends FlameGame
       dragStart = currentTouchPoint; // Update dragStart for the next cycle
 
       // Apply dragDelta to the image position
-      Vector2 dragOffset = topImage.position + dragDelta;
+      Vector2 dragOffset = topImageContainer.position + dragDelta;
 
       // Adjust newPosition based on the drag
-      Vector2 newPosition = calculateNewPosition(dragOffset, zoomPosition,
-          imageZoom, imageZoom, topImage.size, topImageContainer.size);
+      Vector2 newPosition = calculateNewPosition(
+          dragOffset,
+          zoomPosition,
+          imageZoom,
+          imageZoom,
+          topImageContainer.size,
+          topPositionalContainer.size);
 
-      topImage.position = newPosition;
-      bottomImage.position = newPosition;
+      topImageContainer.position = newPosition;
+      bottomImageContainer.position = newPosition;
     }
     // For Pinch-to-Zoom
     else if (info.pointerCount > 1) {
@@ -177,19 +190,19 @@ class DifferencesGame extends FlameGame
       double newZoom = max(1, min(3, info.scale.global.y));
 
       Vector2 newPosition = calculateNewPosition(
-          topImage.position,
+          topImageContainer.position,
           zoomPosition,
           imageZoom,
           newZoom,
-          topImage.size,
-          topImageContainer.size);
+          topImageContainer.size,
+          topPositionalContainer.size);
 
       Vector2 imageScale = Vector2(newZoom, newZoom);
-      topImage.scale = imageScale;
-      bottomImage.scale = imageScale;
+      topImageContainer.scale = imageScale;
+      bottomImageContainer.scale = imageScale;
 
-      topImage.position = newPosition;
-      bottomImage.position = newPosition;
+      topImageContainer.position = newPosition;
+      bottomImageContainer.position = newPosition;
 
       imageZoom = newZoom;
     }
@@ -212,10 +225,10 @@ class DifferencesGame extends FlameGame
 
   Future<void> resetZoom() async {
     isZooming = false;
-    topImage.position = Vector2.zero();
-    bottomImage.position = Vector2.zero();
-    topImage.scale = Vector2.all(1);
-    bottomImage.scale = Vector2.all(1);
+    topImageContainer.position = Vector2.zero();
+    bottomImageContainer.position = Vector2.zero();
+    topImageContainer.scale = Vector2.all(1);
+    bottomImageContainer.scale = Vector2.all(1);
   }
 
   Future<void> loadLevel() async {
@@ -235,20 +248,20 @@ class DifferencesGame extends FlameGame
 
     startingY = (screenHeight - totalHeight) / 2;
 
-    topImageContainer = ClipComponent.rectangle(
+    topPositionalContainer = ClipComponent.rectangle(
       position: Vector2(0, startingY), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
       children: [
-        topImage = PositionComponent(
+        topImageContainer = PositionComponent(
             size: Vector2(imageWidth, imageHeight),
             children: [
-              SpriteComponent(
+              topImage = SpriteComponent(
                   sprite: spriteTop, size: Vector2(imageWidth, imageHeight))
             ])
       ],
     );
 
-    bottomImageContainer = ClipComponent.rectangle(
+    bottomPositionalContainer = ClipComponent.rectangle(
       position: Vector2(
           0,
           startingY +
@@ -256,17 +269,17 @@ class DifferencesGame extends FlameGame
               size.x * spaceBetweenImages), // Adjusted position
       size: Vector2(imageWidth, imageHeight),
       children: [
-        bottomImage = PositionComponent(
+        bottomImageContainer = PositionComponent(
             size: Vector2(imageWidth, imageHeight),
             children: [
-              SpriteComponent(
+              bottomImage = SpriteComponent(
                   sprite: spriteBottom, size: Vector2(imageWidth, imageHeight))
             ])
       ],
     );
 
-    add(topImageContainer);
-    add(bottomImageContainer);
+    add(topPositionalContainer);
+    add(bottomPositionalContainer);
 
     initDifferenceAreas(size.x, imageHeight);
     addCircleOverlays(circleSprite, imageHeight, startingY);
@@ -322,8 +335,8 @@ class DifferencesGame extends FlameGame
       circleOverlaysTop.add(circleTop);
       circleOverlaysBottom.add(circleBottom);
 
-      topImage.add(circleTop);
-      bottomImage.add(circleBottom);
+      topImageContainer.add(circleTop);
+      bottomImageContainer.add(circleBottom);
     }
   }
 
@@ -367,34 +380,32 @@ class DifferencesGame extends FlameGame
         if (hintButton.requestTip()) {
           displayHint();
         }
-      } else {
-        print("Tap: $tapPos");
-        print(hintButton.position);
       }
     }
   }
 
   bool isTapOnAnyImage(Vector2 tapPos) {
-    return isTapOnPositionalComponent(tapPos, topImageContainer) ||
-        isTapOnPositionalComponent(tapPos, bottomImageContainer);
+    return isTapOnPositionalComponent(tapPos, topPositionalContainer) ||
+        isTapOnPositionalComponent(tapPos, bottomPositionalContainer);
   }
 
   void handleImageTap(Vector2 tapPos) {
     bool foundDifference = false;
     bool hasBeenFoundBefore = false;
 
-    bool isTopImage = topImageContainer.toRect().contains(tapPos.toOffset());
+    bool isTopImage =
+        topPositionalContainer.toRect().contains(tapPos.toOffset());
     bool isBottomImage =
-        bottomImageContainer.toRect().contains(tapPos.toOffset());
+        bottomPositionalContainer.toRect().contains(tapPos.toOffset());
 
     Vector2 imageTapPos = Vector2.zero();
     if (isTopImage || isBottomImage) {
       Rect imageRect = isTopImage
-          ? topImageContainer.toRect()
-          : bottomImageContainer.toRect();
+          ? topPositionalContainer.toRect()
+          : bottomPositionalContainer.toRect();
       imageTapPos = Vector2(
-        (tapPos.x - imageRect.left - topImage.x) / imageZoom,
-        (tapPos.y - imageRect.top - topImage.y) /
+        (tapPos.x - imageRect.left - topImageContainer.x) / imageZoom,
+        (tapPos.y - imageRect.top - topImageContainer.y) /
             imageZoom, // Adjusted position based on zoom
       );
     }
@@ -426,12 +437,15 @@ class DifferencesGame extends FlameGame
   }
 
   Vector2 getNormalizedImagePos(Vector2 pos) {
-    bool isTopImage = topImageContainer.toRect().contains(pos.toOffset());
-    bool isBottomImage = bottomImageContainer.toRect().contains(pos.toOffset());
+    bool isTopImage = topPositionalContainer.toRect().contains(pos.toOffset());
+    bool isBottomImage =
+        bottomPositionalContainer.toRect().contains(pos.toOffset());
 
     Vector2 normalizedPos = Vector2.zero();
     if (isTopImage || isBottomImage) {
-      Rect imageRect = isTopImage ? topImage.toRect() : bottomImage.toRect();
+      Rect imageRect = isTopImage
+          ? topImageContainer.toRect()
+          : bottomImageContainer.toRect();
       normalizedPos = Vector2(
         (pos.x - imageRect.left) / imageRect.width,
         (pos.y - imageRect.top) / imageRect.height,
@@ -445,9 +459,9 @@ class DifferencesGame extends FlameGame
       if (circleOverlaysTop[i].opacity == 0.0) {
         double hintSize = getRandomDouble(15, 20);
         addHintTwinkle(circleOverlaysTop[i].position + randomVector2(40),
-            Vector2(hintSize, hintSize), topImage);
+            Vector2(hintSize, hintSize), topImageContainer);
         addHintTwinkle(circleOverlaysBottom[i].position + randomVector2(40),
-            Vector2(hintSize, hintSize), bottomImage);
+            Vector2(hintSize, hintSize), bottomImageContainer);
 
         break;
       }
@@ -566,8 +580,8 @@ class DifferencesGame extends FlameGame
   }
 
   void removeLastLevelImages() {
-    remove(topImageContainer);
-    remove(bottomImageContainer);
+    remove(topPositionalContainer);
+    remove(bottomPositionalContainer);
     removeAll(stars);
   }
 
@@ -587,10 +601,10 @@ class DifferencesGame extends FlameGame
 
   void removeAllHintTwinkles() {
     for (var hintTwinkle in hintTwinkles) {
-      if (topImage.contains(hintTwinkle)) {
-        topImage.remove(hintTwinkle);
-      } else if (bottomImage.contains(hintTwinkle)) {
-        bottomImage.remove(hintTwinkle);
+      if (topImageContainer.contains(hintTwinkle)) {
+        topImageContainer.remove(hintTwinkle);
+      } else if (bottomImageContainer.contains(hintTwinkle)) {
+        bottomImageContainer.remove(hintTwinkle);
       }
     }
 
