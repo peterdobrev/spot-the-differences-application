@@ -105,11 +105,10 @@ SpriteButtonComponent initButton(
   return button;
 }
 
-Vector2 getImageTapPosition(
-    Vector2 tapPos, PositionComponent imageContainer, double imageZoom) {
-  Rect imageRect = imageContainer.toRect();
+Vector2 getImageTapPosition(Vector2 tapPos, Rect imageRect,
+    PositionComponent topImageContainer, double imageZoom) {
   return Vector2(
-    (tapPos.x - imageRect.left - imageContainer.x) / imageZoom,
-    (tapPos.y - imageRect.top - imageContainer.y) / imageZoom,
+    (tapPos.x - imageRect.left - topImageContainer.x) / imageZoom,
+    (tapPos.y - imageRect.top - topImageContainer.y) / imageZoom,
   );
 }

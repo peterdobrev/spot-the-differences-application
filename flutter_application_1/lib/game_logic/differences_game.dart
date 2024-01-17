@@ -416,7 +416,10 @@ class DifferencesGame extends FlameGame
 
     Vector2 imageTapPos = getImageTapPosition(
         tapPos,
-        isTopImage ? topPositionalContainer : bottomPositionalContainer,
+        isTopImage
+            ? topPositionalContainer.toRect()
+            : bottomPositionalContainer.toRect(),
+        topImageContainer,
         imageZoom);
     bool foundDifference = checkForDifference(imageTapPos);
 
