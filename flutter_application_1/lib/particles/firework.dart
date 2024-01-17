@@ -3,10 +3,18 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/constants.dart';
+import 'package:flutter_application_1/utils/constants.dart';
 import 'package:flutter_application_1/utils/utils.dart';
 
+/// Generates a firework particle effect.
 Particle fireworkParticle() {
+  // Define constants for magic numbers
+  const double gravityValue = 40;
+  const double maxGlareRadius = 50;
+  const double baseCircleSize = 2;
+  const double maxCircleSize = 3;
+  const double glareThreshold = 0.6;
+
   // A palette to paint over the "sky"
   final paints = [
     Colors.amber,
@@ -15,16 +23,16 @@ Particle fireworkParticle() {
     Colors.redAccent,
     Colors.yellow,
     Colors.yellowAccent,
-    // Adds a nice "lense" tint
-    // to overall effect
-    Colors.blue,
+    Colors.blue, // Adds a nice "lense" tint to overall effect
   ].map((color) => Paint()..color = color).toList();
+
+  final random = Random(); // Single Random instance
 
   return Particle.generate(
     generator: (i) {
       final initialSpeed = randomVector2(fireworksInitialSpeed);
       final deceleration = initialSpeed * fireworksDecelerationMultipler;
-      final gravity = Vector2(0, 40);
+      final gravity = Vector2(0, gravityValue);
 
       return AcceleratedParticle(
         speed: initialSpeed,
@@ -32,16 +40,13 @@ Particle fireworkParticle() {
         child: ComputedParticle(
           renderer: (canvas, particle) {
             final paint = randomElement(paints);
-            // Override the color to dynamically update opacity
             paint.color = paint.color.withOpacity(1 - particle.progress);
 
             canvas.drawCircle(
               Offset.zero,
-              // Closer to the end of lifespan particles
-              // will turn into larger glaring circles
-              Random().nextDouble() * particle.progress > .6
-                  ? Random().nextDouble() * (50 * particle.progress)
-                  : 2 + (3 * particle.progress),
+              random.nextDouble() * particle.progress > glareThreshold
+                  ? random.nextDouble() * (maxGlareRadius * particle.progress)
+                  : baseCircleSize + (maxCircleSize * particle.progress),
               paint,
             );
           },

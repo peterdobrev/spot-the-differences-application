@@ -9,11 +9,6 @@ class HintTwinkle extends SpriteComponent {
             size: size,
             anchor: Anchor.center);
 
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-  }
-
   void playHintAnimations() {
     opacity = 0;
 

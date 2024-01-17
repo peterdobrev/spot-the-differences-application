@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:flutter_application_1/constants.dart';
+import 'package:flutter_application_1/utils/constants.dart';
 import 'package:flutter_application_1/utils/utils.dart';
 import 'package:vibration/vibration.dart';
 
@@ -13,11 +13,6 @@ class WrongTap extends SpriteComponent {
             position: position,
             size: size,
             anchor: Anchor.center);
-
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-  }
 
   void playWrongTapAnimations() {
     opacity = 1;

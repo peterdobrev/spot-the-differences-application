@@ -1,4 +1,4 @@
-import 'package:flutter_application_1/constants.dart';
+import 'package:flutter_application_1/utils/constants.dart';
 
 class GameState {
   int currentLevelIndex = 0;

@@ -4,27 +4,25 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 
+final _random = Random(); // Single Random instance for the entire utils class
+
 double getRandomDouble(double min, double max) {
-  var random = Random();
-  return min + random.nextDouble() * (max - min);
+  return min + _random.nextDouble() * (max - min);
 }
 
 Vector2 getRandomScreenPosition(Vector2 screenSize) {
-  var random = Random();
   return Vector2(
-    random.nextDouble() * screenSize.x,
-    random.nextDouble() * screenSize.y,
+    _random.nextDouble() * screenSize.x,
+    _random.nextDouble() * screenSize.y,
   );
 }
 
 int getRandomInt(int min, int max) {
-  var random = Random();
-  return min + random.nextInt(max - min);
+  return min + _random.nextInt(max - min);
 }
 
 Color randomMaterialColor() {
-  var random = Random();
-  return Colors.primaries[random.nextInt(Colors.primaries.length)];
+  return Colors.primaries[_random.nextInt(Colors.primaries.length)];
 }
 
 Vector2 randomVector2(double multiplier) {
@@ -33,8 +31,7 @@ Vector2 randomVector2(double multiplier) {
 }
 
 T randomElement<T>(List<T> list) {
-  var random = Random();
-  return list[random.nextInt(list.length)];
+  return list[_random.nextInt(list.length)];
 }
 
 bool isTapOnPositionalComponent(Vector2 tapPos, PositionComponent image) {
@@ -73,15 +70,17 @@ void animateOpacity(
   step(0);
 }
 
-Vector2 calculateNewPosition(Vector2 currentPosition, Vector2 focalPoint,
+Vector2 calculateNewZoomPosition(Vector2 currentPosition, Vector2 focalPoint,
     double oldZoom, double newZoom, Vector2 imageSize, Vector2 containerSize) {
-  // Your existing calculations
+  // Calculate the new position of the top left corner of the image
   Vector2 relativeFocalPoint = focalPoint - currentPosition;
+
+  // Calculate the movement of the image due to scaling (since it scales from the top left corner)
   Vector2 movementDueToScaling =
       (relativeFocalPoint * newZoom / oldZoom) - relativeFocalPoint;
   Vector2 newPosition = currentPosition - movementDueToScaling;
 
-  // Constraints
+  // Constraints for the new position so that the image doesn't go out of bounds
   double maxX = max(0, (imageSize.x * newZoom) - containerSize.x);
   double maxY = max(0, (imageSize.y * newZoom) - containerSize.y);
 
@@ -106,29 +105,11 @@ SpriteButtonComponent initButton(
   return button;
 }
 
-SpriteButtonComponent initButtonWithTopRightPlaceholder(
-    Sprite sprite, Sprite circleSprite, Vector2 size, Vector2 position) {
-  // Create the main button
-  SpriteButtonComponent button = SpriteButtonComponent(
-      button: sprite,
-      buttonDown: sprite,
-      size: size,
-      position: position,
-      anchor: Anchor.center);
-
-  Vector2 circleSize = Vector2(20, 20);
-
-  // Position the circle sprite at the top right of the button
-  Vector2 circlePosition = Vector2(position.x + size.x / 2 - circleSize.x / 2,
-      position.y - size.y / 2 - circleSize.y / 2);
-
-  SpriteComponent circle = SpriteComponent(
-      sprite: circleSprite,
-      size: circleSize,
-      position: circlePosition,
-      anchor: Anchor.center);
-
-  button.add(circle);
-
-  return button;
+Vector2 getImageTapPosition(
+    Vector2 tapPos, PositionComponent imageContainer, double imageZoom) {
+  Rect imageRect = imageContainer.toRect();
+  return Vector2(
+    (tapPos.x - imageRect.left - imageContainer.x) / imageZoom,
+    (tapPos.y - imageRect.top - imageContainer.y) / imageZoom,
+  );
 }

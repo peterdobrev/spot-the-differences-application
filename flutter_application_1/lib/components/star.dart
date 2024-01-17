@@ -22,7 +22,7 @@ class Star extends SpriteComponent {
     return super.onLoad();
   }
 
-  void lighten() {
+  void playLightenAnimation() {
     add(
       ColorEffect(
         const Color.fromARGB(0, 255, 230, 0),
@@ -33,7 +33,7 @@ class Star extends SpriteComponent {
     );
   }
 
-  void scaleUp() {
+  void playScaleUpAnimation() {
     SequenceEffect effect = SequenceEffect([
       ScaleEffect.to(Vector2.all(0.7), EffectController(duration: 0.01)),
       ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.15)),

@@ -12,7 +12,7 @@ class Heart extends SpriteComponent {
             size: size,
             anchor: Anchor.center);
 
-  void darken() {
+  void playDarkenAnimations() {
     SequenceEffect scaleEffect = SequenceEffect([
       ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)),
       ScaleEffect.to(Vector2.all(1), EffectController(duration: 0.1))
