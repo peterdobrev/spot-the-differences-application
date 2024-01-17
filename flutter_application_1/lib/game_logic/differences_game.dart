@@ -13,6 +13,7 @@ import 'package:flutter_application_1/components/overlay_circle.dart';
 import 'package:flutter_application_1/components/star.dart';
 import 'package:flutter_application_1/components/tip_system_component.dart';
 import 'package:flutter_application_1/components/wrong_tap.dart';
+import 'package:flutter_application_1/game_logic/difference_check_result.dart';
 import 'package:flutter_application_1/game_logic/levels_data.dart';
 import 'package:flutter_application_1/layers/background_layer.dart';
 import 'package:flutter_application_1/particles/firework.dart';
@@ -421,16 +422,16 @@ class DifferencesGame extends FlameGame
             : bottomPositionalContainer.toRect(),
         topImageContainer,
         imageZoom);
-    bool foundDifference = checkForDifference(imageTapPos);
+    DifferenceCheckResult result = checkForDifference(imageTapPos);
 
-    if (foundDifference) {
+    if (result.foundDifference) {
       onDifferenceSpotted(tapPos);
-    } else {
+    } else if (!result.hasBeenAlreadyFound) {
       onWrongTap(tapPos);
     }
   }
 
-  bool checkForDifference(Vector2 imageTapPos) {
+  DifferenceCheckResult checkForDifference(Vector2 imageTapPos) {
     bool foundDifference = false;
     bool hasBeenAlreadyFound = false;
     for (int i = 0; i < circleOverlaysTop.length; i++) {
@@ -453,7 +454,9 @@ class DifferencesGame extends FlameGame
         if (foundDifference || hasBeenAlreadyFound) break;
       }
     }
-    return foundDifference;
+    return DifferenceCheckResult(
+        foundDifference: foundDifference,
+        hasBeenAlreadyFound: hasBeenAlreadyFound);
   }
 
   void onDifferenceSpotted(Vector2 tapPos) {
